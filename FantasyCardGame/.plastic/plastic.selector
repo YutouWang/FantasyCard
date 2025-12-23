@@ -1,4 +1,0 @@
-repository "FantasyCardGame@tj_yutou_wang@cloud.cn"
-  path "/"
-    br "/main"
-    co "/main"
