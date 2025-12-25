@@ -13,7 +13,7 @@ public class BeginPanel : BasePanel
         startButton.onClick.AddListener(() =>
         {
             Debug.Log("Start button clicked!");
-            UIManager.Instance.HiddenPanel("BeginPanel");
+            UIManager.Instance.HidderPanel("BeginPanel");
             SceneManager.LoadScene("GameScene");
         });
 

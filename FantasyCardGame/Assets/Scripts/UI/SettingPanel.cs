@@ -7,9 +7,12 @@ public class SettingPanel : BasePanel
 
     public override void Init()
     {
-        
-        closeButton.onClick.AddListener(() => {
-            UIManager.Instance.HiddenPanel("SettingPanel");
+        destroyOnHide = false;
+
+        closeButton.onClick.AddListener(() =>
+        {
+            UIManager.Instance.HidderPanel("SettingPanel");
         });
     }
+
 }

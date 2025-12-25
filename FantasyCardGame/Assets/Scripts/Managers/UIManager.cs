@@ -31,8 +31,15 @@ public class UIManager
     //显示面板
     public BasePanel ShowPanel(string panelName)
     {
+        if (panelDic.ContainsKey(panelName))
+        {
+            panelDic[panelName].gameObject.SetActive(true);
+            panelDic[panelName].ShowMe();
+            return panelDic[panelName];
+        }
+
         //判断字典中是否显示过这个面板 有的话直接返回
-        if(panelDic.ContainsKey(panelName))
+        if (panelDic.ContainsKey(panelName))
                 return panelDic[panelName];
 
         //如果panelDic没有面板的话 动态创建面板预设体实例
@@ -52,22 +59,27 @@ public class UIManager
 
     }
     //隐藏面板
-    public  void HiddenPanel(string panelName)
+    public void HidderPanel(string panelName)
     {
-        //先淡出 再执行删除面板逻辑 这里的删除面板逻辑作为匿名函数传进 HideMe 的委托
-        panelDic[panelName].HideMe(() => 
-        {
-            if (panelDic.ContainsKey(panelName))
-            {
-                //删除脚本依附的对象
-                GameObject.Destroy(panelDic[panelName].gameObject);
+        if (!panelDic.ContainsKey(panelName))
+            return;
 
-                //删除脚本
+        var panel = panelDic[panelName];
+
+        panel.HideMe(() =>
+        {
+            if (panel.destroyOnHide)
+            {
+                GameObject.Destroy(panel.gameObject);
                 panelDic.Remove(panelName);
             }
+            else
+            {
+                panel.gameObject.SetActive(false); // 只隐藏
+            }
         });
-        
-    } 
+    }
+
 
     //得到面板
     public BasePanel GetPanel(string panelName)

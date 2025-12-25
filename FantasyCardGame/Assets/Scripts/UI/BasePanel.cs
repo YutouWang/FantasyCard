@@ -12,6 +12,8 @@ public abstract class BasePanel : MonoBehaviour
     private float alphaSpeed = 10;
     //当前是隐藏还是显示状态
     public bool isShow = false;
+    public bool destroyOnHide = false; // 默认不销毁
+
 
     //当隐藏完毕后需要执行的逻辑
     private UnityAction hideCallBack = null;
