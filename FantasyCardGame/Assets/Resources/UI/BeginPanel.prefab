@@ -784,7 +784,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1378879978436940738}
   - component: {fileID: 6283869869539435508}
-  - component: {fileID: 7883802627805796967}
+  - component: {fileID: 108510501460888575}
+  - component: {fileID: 1805548937383542349}
   m_Layer: 5
   m_Name: BeginPanel
   m_TagString: Untagged
@@ -820,7 +821,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8064761578863143209}
   m_CullTransparentMesh: 1
---- !u!114 &7883802627805796967
+--- !u!114 &108510501460888575
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -836,6 +837,18 @@ MonoBehaviour:
   startButton: {fileID: 8368151780899040506}
   settingsButton: {fileID: 9171700665102602918}
   exitButton: {fileID: 6035705961182542632}
+--- !u!225 &1805548937383542349
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8064761578863143209}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &8842223363211291932
 GameObject:
   m_ObjectHideFlags: 0

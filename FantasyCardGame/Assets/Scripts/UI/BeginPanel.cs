@@ -19,7 +19,7 @@ public class BeginPanel : BasePanel
 
         settingsButton.onClick.AddListener(() =>
         {
-            Debug.Log("Settings clicked");
+            Debug.Log("设置按钮被点击了！");
             UIManager.Instance.ShowPanel("SettingPanel");
         });
 

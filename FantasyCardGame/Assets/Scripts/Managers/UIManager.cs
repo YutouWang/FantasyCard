@@ -32,8 +32,12 @@ public class UIManager
     public BasePanel ShowPanel(string panelName)
     {
         //判断字典中是否显示过这个面板 有的话直接返回
-        if(panelDic.ContainsKey(panelName))
-                return panelDic[panelName];
+        if (panelDic.ContainsKey(panelName))
+        {
+            //panelDic[panelName].ShowMe();
+            return panelDic[panelName];
+        }
+               
 
         //如果panelDic没有面板的话 动态创建面板预设体实例
         GameObject panel_Prefab = GameObject.Instantiate(Resources.Load<GameObject>("UI/"+panelName));
