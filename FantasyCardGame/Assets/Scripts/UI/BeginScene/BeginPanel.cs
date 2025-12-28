@@ -15,6 +15,7 @@ public class BeginPanel : BasePanel
             Debug.Log("Start button clicked!");
             UIManager.Instance.HiddenPanel("BeginPanel");
             SceneManager.LoadScene("GameScene");
+            UIManager.Instance.ShowPanel("StartStoryPanel");
         });
 
         settingsButton.onClick.AddListener(() =>

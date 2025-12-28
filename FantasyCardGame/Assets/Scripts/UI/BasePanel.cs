@@ -61,9 +61,10 @@ public abstract class BasePanel : MonoBehaviour
         hideCallBack = callBack;
     }
     // Update is called once per frame
-    void Update()
+    public virtual void Update()
     {
-        if(Time.frameCount%60 == 0)
+        //测试当前面板是否显示的信息
+        if (Time.frameCount % 60 == 0)
         {
             Debug.Log($"{name} Update running, isShow={isShow}, alpha={canvasGroup.alpha}");
         }
