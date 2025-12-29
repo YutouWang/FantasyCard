@@ -11,20 +11,21 @@ public class StartStoryPanel : BasePanel
         //按下继续按钮 会进入选天赋面板 
         continueBtn.onClick.AddListener(() =>
         {
-            //UIManager.Instance.ShowPanel("TalentPanel");
+            //先隐藏故事面板 不然影响天赋面板的显示
+            UIManager.Instance.HiddenPanel("StartStoryPanel");
+            print("进入选天赋面板");
+            UIManager.Instance.ShowPanel("TalentPanel");
 
         });
     }
 
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
     // Update is called once per frame
-    void Update()
+    public override void Update()
     {
+        base.Update();
+        print("开场分镜动画的逻辑");
+        //此处应该写三个分镜一次按时间显示出来的逻辑
         
     }
 }
