@@ -28,7 +28,8 @@ public struct ChoiceEffect
     public string effectName;
 
     /// <summary> 对应效果的作用数值 </summary>
-    public int value;
+    public int effectValue;
+
 }
 
 //卡牌数据结构 后续在CardDataBase 中初始化 申明4个CardData类型的变量 4中不同的初始化
@@ -48,12 +49,12 @@ public class CardData
     //其他三种卡牌作用的效果值
     public int value;
 
-    public ChoiceEffect[] choiceEffects = new ChoiceEffect[2];
+    public ChoiceEffect[] choiceEffects;
 
     //是否为奖励排
     public bool isRewardCard = false;
 
-    public Sprite cardPicture;
+    public Sprite cardSprite;
 
 
 }
