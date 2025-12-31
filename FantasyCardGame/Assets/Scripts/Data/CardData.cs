@@ -25,9 +25,11 @@ public class CardData
 {
     public int cardID;
 
+    public string cardName;
+
     public CardType cardType;
 
-    public string cardName;
+
 
     //卡牌的描述（鼠标垫上去会出现功能描述）
     public string cardDescription;

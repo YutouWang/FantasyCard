@@ -10,7 +10,7 @@ using UnityEngine;
 /// 
 
 //疑问：弃牌的方法也是在这里面提供的吧？
-public class CardManager 
+public class CardManager
 {
     public static CardManager instance = new CardManager();
 
@@ -21,7 +21,7 @@ public class CardManager
     public CardManager()
     {
 
-    } 
+    }
 
     //向外部提供的方法
 
@@ -37,5 +37,5 @@ public class CardManager
         //(需要确定实例化卡片的动作是在每次抽卡的时候 还是单独写一个方法 抽卡的时候只提供随机的序号)
         return null;
     }
-    
+
 }
