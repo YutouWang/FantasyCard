@@ -19,8 +19,19 @@ public enum CardType
     /// <summary> 治疗（绿色牌）</summary>
     Recovery
 }
+/// <summary>
+/// 恢复牌专用 用来选择到底是加san值还是加temperature
+/// </summary>
+public struct ChoiceEffect
+{
+    /// <summary> 作用效果的名称 可填“体温”“san值”</summary>
+    public string effectName;
 
-//卡牌数据是四种拍写四个CardData 然后分别挂载在四个预制体上吗
+    /// <summary> 对应效果的作用数值 </summary>
+    public int value;
+}
+
+//卡牌数据结构 后续在CardDataBase 中初始化 申明4个CardData类型的变量 4中不同的初始化
 public class CardData
 {
     public int cardID;
@@ -31,17 +42,18 @@ public class CardData
 
 
 
-    //卡牌的描述（鼠标垫上去会出现功能描述）
+    //卡牌的描述（鼠标点上去会出现功能描述）
     public string cardDescription;
 
-    //卡牌作用的效果值
+    //其他三种卡牌作用的效果值
     public int value;
+
+    public ChoiceEffect[] choiceEffects = new ChoiceEffect[2];
 
     //是否为奖励排
     public bool isRewardCard = false;
 
+    public Sprite cardPicture;
 
-
-    //卡牌的作用效果（没有确定）
 
 }

@@ -34,7 +34,7 @@ public class GameProgressData
     public TalentType selectedTalent = TalentType.Scarf;
 
     //玩家的手牌（当前拥有的牌情况,下一关会继承本关卡的手牌）
-    public List<CardData> playerHandCards = new List<CardData>(); 
+    public List<CardData> playerHandCards = new List<CardData>();
 
     //玩家获得的奖励牌
     public List<CardData> rewardsCards = new List<CardData>();
@@ -46,5 +46,5 @@ public class GameProgressData
 
     //手牌上限
     public int maxHandSize;
-    
+
 }
