@@ -408,8 +408,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: -5.0249023, y: 0.8376007}
-  m_SizeDelta: {x: -10.0499, y: -63.0908}
+  m_AnchoredPosition: {x: 211, y: 0.000011444092}
+  m_SizeDelta: {x: 356.1542, y: -66.6097}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8977985783082714849
 CanvasRenderer:
@@ -936,6 +936,7 @@ GameObject:
   - component: {fileID: 8185308171111716867}
   - component: {fileID: 6932797179849083393}
   - component: {fileID: 425222624089933382}
+  - component: {fileID: -1310637828192452225}
   m_Layer: 5
   m_Name: BattlePanel
   m_TagString: Untagged
@@ -1005,6 +1006,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &-1310637828192452225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6645066387174397628}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 270c8d549beee224882bc75a21138749, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &6756501662967009832
 GameObject:
   m_ObjectHideFlags: 0
@@ -1614,9 +1627,9 @@ RectTransform:
   m_Father: {fileID: 8521513309758790462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 6.6655, y: -0.00009918213}
-  m_SizeDelta: {x: -13.3311, y: -78.4174}
+  m_AnchorMax: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 245.06287, y: 0.42690277}
+  m_SizeDelta: {x: 454.1257, y: -82.8123}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1625548974389271004
 CanvasRenderer:
