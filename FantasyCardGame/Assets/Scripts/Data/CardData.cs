@@ -58,3 +58,27 @@ public class CardData
 
 
 }
+
+//牌库枚举类型
+public enum DeckType
+{
+    BaseDeck,
+    RewardDeck
+}
+
+//封装carddata 作为场景中实例化出来的具体卡牌实例
+//可以在牌库（看不见的地方）中管理 也可以在UI面板（看得见的地方）上管理
+
+public class CardInstance
+{
+    public CardData cardTemplate;
+
+    public DeckType deckType;
+
+    //有参构造 
+    public CardInstance(CardData template,DeckType type)
+    {
+        cardTemplate = template ;
+        deckType = type ;
+    }
+}

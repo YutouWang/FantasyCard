@@ -23,16 +23,19 @@ public class CardDataInit : MonoBehaviour
     public CardData recallCard;
     public CardData recoveryCard;
 
+    //大牌库和小牌库的总数量 方便后续数据更改
+    public int baseDeckNum = 20, rewardDeckNUm;
+
     //继承mono 所以在awake中初始化
     private void Awake()
     {
         attackCard = new CardData
         {
             cardID = 1,
-            cardName = "锋芒",// ????动态生成名字吗 那这里好像应该填英文
+            cardName = "Edge",// ????动态生成名字吗 那这里好像应该填英文
             cardType = CardType.Attack,
 
-            cardDescription = "我是描述锋芒牌的作用的",
+            cardDescription = "Using this card can reduce the San value of Boss 20.",
             value = 20,
             //默认初始卡牌都不是奖励牌 如果需要奖励牌自行更改
             isRewardCard = false,
@@ -42,10 +45,10 @@ public class CardDataInit : MonoBehaviour
         defenseCard = new CardData
         {
             cardID = 2,
-            cardName = "深潜",
+            cardName = "Immersion",
             cardType = CardType.Defense,
 
-            cardDescription = "我是描述深潜牌的作用的",
+            cardDescription = "Using this card can block one attack from the boss",
             /// <summary> 一次防御的机会 这个value代表次数 </summary>
             value = 1,
             isRewardCard = false,
@@ -80,4 +83,40 @@ public class CardDataInit : MonoBehaviour
     }
 
     //初始化牌库逻辑
+    //如果回退到第一关需要重置牌库 所以游戏中不止一次会初始化20张牌库 所以写成函数而不是在awake中
+
+
+    public List<CardInstance> CreateBaseDeck()
+    {
+        List<CardInstance> baseDeck = new List<CardInstance>();
+        //每种牌的张数
+        int count = baseDeckNum / 4;
+
+        //五张攻击牌(0-4)
+        for(int i = 0; i < count; i++)
+        {
+            baseDeck.Add(new CardInstance(attackCard, DeckType.BaseDeck));
+        }
+
+        //五张防御牌（5-9）
+        for(int i = count; i < 2 * count; i++)
+        {
+            baseDeck.Add(new CardInstance(defenseCard, DeckType.BaseDeck));
+        }
+
+        //五张回收牌(10-14)
+        for(int i = 2 * count; i < 3 * count; i++)
+        {
+            baseDeck.Add(new CardInstance(recallCard, DeckType.BaseDeck));
+        }
+
+        //五张恢复牌(15-19)
+        for(int i = 3 * count; i < 4 * count; i++)
+        {
+            baseDeck.Add(new CardInstance(recoveryCard, DeckType.BaseDeck));
+        }
+
+        return baseDeck;
+
+    }
 }
