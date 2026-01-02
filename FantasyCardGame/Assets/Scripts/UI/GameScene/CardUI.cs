@@ -3,34 +3,93 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
+using UnityEngine.EventSystems;
 
-public class CardUI : MonoBehaviour
+public class CardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     //card整体操作的button
     [SerializeField] private Button cardBtn;
-    [SerializeField] private Image cardSprite;
+    
     //card的名字
     [SerializeField] private TMP_Text  cardName;
 
     //提示的背景（用来控制整个提示框的显示和隐藏）
-    [SerializeField] private Image describeBK;
+    [SerializeField] private Image descBK;
     //提示的文字描述 根据卡牌类型来适配赋值
-    [SerializeField] private TMP_Text description;
+    [SerializeField] private TMP_Text descText;
+
+    //用一个CardInstance来提供卡牌数据
+    private CardInstance cardInstance;
 
     private void Awake()
     {
-        
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-        
+        //默认提示文本不显示
+        if (descBK != null)
+            descBK.gameObject.SetActive(false);
+
+        //说明框不档鼠标事件
+        DisableRaycastOnDesc();
     }
 
-    // Update is called once per frame
-    void Update()
+    //主要是设置 raycast 的
+    private void DisableRaycastOnDesc()
     {
-        
+        if (descBK == null) return;
+
+        // 背景 Image
+        var bg = descBK.GetComponent<Image>();
+        if (bg != null) bg.raycastTarget = false;
+
+        // 文字 TMP
+        if (descText != null) descText.raycastTarget = false;
     }
+
+    //一创建cardinstance实例就调用bind函数 进行UI层面的初始化
+    public void BindInstance(CardInstance instance)
+    {
+        //传进来的实例信息进行保存 后面逻辑判断会用得到
+        cardInstance = instance;
+
+        if (cardBtn.image.sprite != null)
+        {
+            //直接从button身上拿sprite 因为image是button的一个组件
+            cardBtn.image.sprite = cardInstance.cardTemplate.cardSprite;
+        }
+
+        if(cardName!=null)
+        {
+            cardName.text = cardInstance.cardTemplate.cardName;
+        }
+
+        if (descText != null)
+        {
+            descText.text = cardInstance.cardTemplate.cardDescription;
+        }
+
+        //再关一次是为了保险
+        if (descBK != null)
+        {
+            descBK.gameObject.SetActive(false);
+        }
+    }
+
+    //鼠标悬停在此处时执行的逻辑  这是悬停检测函数（类似于碰撞检测函数那种）
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (descBK !=null)
+        {
+            descBK.gameObject.SetActive(true);
+        }
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (descBK != null)
+        {
+            descBK.gameObject.SetActive(false);
+        }
+    }
+
+
 }

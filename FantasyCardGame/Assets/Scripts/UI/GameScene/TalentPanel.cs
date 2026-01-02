@@ -16,6 +16,7 @@ public class TalentPanel : BasePanel
         {
             print("每回合体温值流失降低至5点");
             UIManager.Instance.ShowPanel("BattlePanel");
+            UIManager.Instance.HiddenPanel("TalentPanel");
         });
 
         //按下药按钮
@@ -23,6 +24,7 @@ public class TalentPanel : BasePanel
         {
             print("每局成功使用深潜回5点san值");
             UIManager.Instance.ShowPanel("BattlePanel");
+            UIManager.Instance.HiddenPanel("TalentPanel");
         });
 
         //按下小熊键
@@ -30,6 +32,7 @@ public class TalentPanel : BasePanel
         {
             print("每回合行动前多抽取一张卡牌");
             UIManager.Instance.ShowPanel("BattlePanel");
+            UIManager.Instance.HiddenPanel("TalentPanel");
         });
     }
 
