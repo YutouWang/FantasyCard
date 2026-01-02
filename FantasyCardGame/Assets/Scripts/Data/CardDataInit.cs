@@ -32,10 +32,10 @@ public class CardDataInit : MonoBehaviour
         attackCard = new CardData
         {
             cardID = 1,
-            cardName = "Edge",// ????动态生成名字吗 那这里好像应该填英文
+            cardName = "Edge",
             cardType = CardType.Attack,
 
-            cardDescription = "Using this card can reduce the San value of Boss 20.",
+            cardDescription = "Deal 20 SAN damage to the Boss.",
             value = 20,
             //默认初始卡牌都不是奖励牌 如果需要奖励牌自行更改
             isRewardCard = false,
@@ -45,10 +45,10 @@ public class CardDataInit : MonoBehaviour
         defenseCard = new CardData
         {
             cardID = 2,
-            cardName = "Immersion",
+            cardName = "Submerge",//深潜
             cardType = CardType.Defense,
 
-            cardDescription = "Using this card can block one attack from the boss",
+            cardDescription = "Evade the Boss’s next attack.",
             /// <summary> 一次防御的机会 这个value代表次数 </summary>
             value = 1,
             isRewardCard = false,
@@ -58,23 +58,24 @@ public class CardDataInit : MonoBehaviour
         recallCard = new CardData
         {
             cardID = 3,
-            cardName = "余温",
+            cardName = "Warmth",//余温
             cardType = CardType.Recall,
 
-            cardDescription = "我是描述余温牌的作用的",
+            cardDescription = "Return the last card you played last turn to your hand. " +
+            "If it’s the first turn, this has no effect.",
             /// <summary> 回收牌的作用是一个行为 牌本身没有数值 </summary>
             value = 0,
             isRewardCard = false,
             cardSprite = recallSprite,
         };
-
+        
         recoveryCard = new CardData
         {
             cardID = 4,
-            cardName = "和解",
+            cardName = "Acceptance",//和解
             cardType = CardType.Recovery,
 
-            cardDescription = "我是描述和解牌的作用的",
+            cardDescription = "Restore 30 Sanity / Restore 30 Body Temperature",
             choiceEffects = new ChoiceEffect[]{new ChoiceEffect { effectName = "san", effectValue = 30 },
             new ChoiceEffect { effectName = "temperature", effectValue = 30 } },
             cardSprite = recoverySprite,

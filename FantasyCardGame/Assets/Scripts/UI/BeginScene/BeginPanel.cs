@@ -7,6 +7,7 @@ public class BeginPanel : BasePanel
     public Button startButton;
     public Button settingsButton;
     public Button exitButton;
+    public Button text;
 
     public override void Init()
     {
@@ -27,6 +28,11 @@ public class BeginPanel : BasePanel
         exitButton.onClick.AddListener(() =>
         {
             Application.Quit();
+        });
+
+        text.onClick.AddListener(() =>
+        {
+            UIManager.Instance.ShowPanel("Battlepanel");
         });
     }
 }
