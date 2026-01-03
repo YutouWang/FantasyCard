@@ -2,15 +2,22 @@ using UnityEngine;
 
 public class BossData
 {
-    public LevelType levelType = LevelType.Level1; // 关卡 1 / 2 / 3
+    // 用枚举表示关卡/阶段
+    public LevelType stage;
+
     public int maxHp = 100;
     public int currentHp = 100;
 
+    public BossData(LevelType stage)
+    {
+        this.stage = stage;
+    }
+
     public void TakeDamage(int damage)
     {
+        if (damage <= 0) return;
         currentHp -= damage;
-        if (currentHp < 0)
-            currentHp = 0;
+        if (currentHp < 0) currentHp = 0;
     }
 
     public bool IsDead()
@@ -18,24 +25,20 @@ public class BossData
         return currentHp <= 0;
     }
 
-    public BossData(int stage)
-    {
-        //this.stage = stage;
-    }
-
-    // 返回 Boss 本回合技能
-    // 0 = 攻击玩家
-    // 1 = 夺取卡牌
+    // 0 = 攻击玩家, 1 = 夺取卡牌
     public int GetRandomSkill()
     {
-        return Random.Range(0, 2);
+        return Random.Range(0, 2); // 只会是 0 或 1
     }
 
     public int GetAttackDamage()
     {
-        //if (stage == 1) return 10;
-        //if (stage == 2) return 20;
-        //if (stage == 3) return 30;
-        return 10;
+        switch (stage)
+        {
+            case LevelType.Level1: return 10;
+            case LevelType.Level2: return 20;
+            case LevelType.Level3: return 30;
+            default: return 10;
+        }
     }
 }
