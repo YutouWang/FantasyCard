@@ -5,14 +5,15 @@ using UnityEngine.UI;
 using TMPro;
 using System;
 using UnityEngine.EventSystems;
+using UnityEngine.Events;
 
 public class CardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     //card整体操作的button
     [SerializeField] private Button cardBtn;
-    
+
     //card的名字
-    [SerializeField] private TMP_Text  cardName;
+    [SerializeField] private TMP_Text cardName;
 
     //提示的背景（用来控制整个提示框的显示和隐藏）
     [SerializeField] private Image descBK;
@@ -46,18 +47,19 @@ public class CardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     }
 
     //一创建cardinstance实例就调用bind函数 进行UI层面的初始化
-    public void BindInstance(CardInstance instance)
+    //把点击的回调时间也传进来 绑定完了就知道点击按钮会做什么事（OnCardClicked）
+    public void BindInstance(CardInstance instance,UnityAction<CardInstance> OnCardClicked)
     {
         //传进来的实例信息进行保存 后面逻辑判断会用得到
         cardInstance = instance;
 
-        if (cardBtn.image.sprite != null)
+        if (cardBtn!=null && cardBtn.image != null)
         {
             //直接从button身上拿sprite 因为image是button的一个组件
             cardBtn.image.sprite = cardInstance.cardTemplate.cardSprite;
         }
 
-        if(cardName!=null)
+        if (cardName != null)
         {
             cardName.text = cardInstance.cardTemplate.cardName;
         }
@@ -72,12 +74,18 @@ public class CardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
         {
             descBK.gameObject.SetActive(false);
         }
+
+        cardBtn.onClick.AddListener(() =>
+        {
+            //这里不知道为啥不能写成判空处理(更保险) OnCardClicked?.Invoke(cardInstance);
+            OnCardClicked.Invoke(cardInstance);
+        });
     }
 
     //鼠标悬停在此处时执行的逻辑  这是悬停检测函数（类似于碰撞检测函数那种）
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (descBK !=null)
+        if (descBK != null)
         {
             descBK.gameObject.SetActive(true);
         }

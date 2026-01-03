@@ -20,10 +20,11 @@ public class PlayerData
 
     public bool isAlive => currentHP > 0;
 
-    // ======================
-    // 构造 & 初始化
-    // ======================
 
+
+
+
+    // 初始化 满血满能量
     public void Init()
     {
         currentHP = maxHP;

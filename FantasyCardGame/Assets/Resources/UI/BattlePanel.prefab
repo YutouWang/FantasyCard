@@ -122,7 +122,7 @@ GameObject:
   m_Component:
   - component: {fileID: 49454278007623219}
   m_Layer: 5
-  m_Name: EnemyArea
+  m_Name: EnemyHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -259,8 +259,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: 0, y: 181.86}
-  m_SizeDelta: {x: 0, y: 363.72}
+  m_AnchoredPosition: {x: 0, y: 173.05}
+  m_SizeDelta: {x: 0, y: 274.6867}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6106571318845031910
 CanvasRenderer:
@@ -524,7 +524,7 @@ GameObject:
   - component: {fileID: 514580602075340263}
   - component: {fileID: 7932928670582389585}
   m_Layer: 5
-  m_Name: HPBar
+  m_Name: HPBar_Boss
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -549,7 +549,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -400, y: -114.9995}
+  m_AnchoredPosition: {x: -331, y: -113}
   m_SizeDelta: {x: 600, y: 168.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &514580602075340263
@@ -777,7 +777,7 @@ GameObject:
   - component: {fileID: 4428048103766131050}
   - component: {fileID: 7661139622040474852}
   m_Layer: 5
-  m_Name: HPBar
+  m_Name: HPBar_Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -801,7 +801,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 400, y: -114.999466}
+  m_AnchoredPosition: {x: 340, y: -114.999466}
   m_SizeDelta: {x: 600, y: 166.4}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &4428048103766131050
@@ -879,7 +879,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5211523527134327919}
   m_Layer: 5
-  m_Name: PlayerArea
+  m_Name: PlayerHUD
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1076,8 +1076,71 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isShow: 0
   handRoot: {fileID: 4022531799777010528}
+  playedZone: {fileID: 4400522593181697313}
   cardPrefab: {fileID: 3359990620152501388, guid: 141ffa29c831a6e428995bdcc550713a, type: 3}
   cardDataInitPath: Card/CardDataInit
+--- !u!1 &6733385172046986036
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4400522593181697313}
+  - component: {fileID: 6301088806283011188}
+  m_Layer: 5
+  m_Name: PlayedZone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &4400522593181697313
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6733385172046986036}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5131978108729015253}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 30, y: 381}
+  m_SizeDelta: {x: 1323.52, y: 266.2984}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &6301088806283011188
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6733385172046986036}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 10
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 0
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!1 &6756501662967009832
 GameObject:
   m_ObjectHideFlags: 0
@@ -1240,7 +1303,7 @@ GameObject:
   - component: {fileID: 5697608038955081772}
   - component: {fileID: 4097460187139847264}
   m_Layer: 5
-  m_Name: BossIcon
+  m_Name: BossSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1390,7 +1453,7 @@ GameObject:
   - component: {fileID: 5419703344276353388}
   - component: {fileID: 3838344255792522731}
   m_Layer: 5
-  m_Name: EnergyBar
+  m_Name: EnergyBar_Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1415,7 +1478,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 358.9, y: -287.72}
+  m_AnchoredPosition: {x: 340, y: -280}
   m_SizeDelta: {x: 400, y: 119.4494}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5419703344276353388
@@ -1512,6 +1575,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4022531799777010528}
+  - {fileID: 4400522593181697313}
   m_Father: {fileID: 8185308171111716867}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

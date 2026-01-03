@@ -13,7 +13,7 @@ public class StatBar : MonoBehaviour
     private int maxValue;
     private int currentValue;
 
-    // 初始化数值
+    // 初始化数值 血条最大值 当前值
     public void Initialize(int max, int current)
     {
         maxValue = max;
@@ -21,7 +21,11 @@ public class StatBar : MonoBehaviour
         displayedValue = current;
 
         if (slider != null)
+        {
             slider.maxValue = maxValue;
+            slider.value = displayedValue;
+        }
+            
 
         slider.value = displayedValue;
     }
@@ -34,6 +38,7 @@ public class StatBar : MonoBehaviour
 
     void Update()
     {
+        //插值处理血条变化情况
         if (displayedValue != currentValue)
         {
             displayedValue = Mathf.Lerp(displayedValue, currentValue, Time.deltaTime * smoothSpeed);

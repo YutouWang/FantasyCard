@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class BossData
 {
-    public int stage; // ¹Ø¿¨ 1 / 2 / 3
+    public LevelType levelType = LevelType.Level1; // ¹Ø¿¨ 1 / 2 / 3
     public int maxHp = 100;
     public int currentHp = 100;
 
