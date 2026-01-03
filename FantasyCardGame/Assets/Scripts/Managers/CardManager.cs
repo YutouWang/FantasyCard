@@ -132,12 +132,12 @@ public class CardManager
             return false;
 
         // 现在会加到队尾 不会回到原来的位置 但是起码能取消出牌了
-        Hand.Add(card);   
+        Hand.Add(card);
         return true;
     }
 
     /// <summary>
-    /// 回牌库方法 例如使用掉了以后回牌库 弃掉的牌回牌库
+    /// 回牌库方法 使用掉了以后回牌库 不是弃掉的牌回牌库
     /// </summary>
     public void ReturnPlayedToBaseDeck()
     {
@@ -149,6 +149,25 @@ public class CardManager
         playedInThisTurn.Clear();
     }
 
+    /// <summary>
+    /// 弃牌：Hand -> BaseDeck（玩家在弃牌阶段点手牌）
+    /// </summary>
+    /// <param name="card">传进来要弃掉的牌</param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    public bool DiscardFromHand(CardInstance card)
+    {
+        if (card == null) 
+            return false;
+        if (_baseDeck == null) 
+            throw new InvalidOperationException("CardManager 未初始化");
+
+        if (!Hand.Remove(card)) 
+            return false;
+
+        _baseDeck.Add(card);
+        return true;
+    }
 
 
 }

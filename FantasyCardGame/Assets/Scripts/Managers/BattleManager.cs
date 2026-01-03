@@ -21,7 +21,7 @@ public class BattleManager : MonoBehaviour
         playerData = new PlayerData();
         playerData.Init();
 
-        bossData = new BossData(stage: 1);
+        bossData = new BossData(LevelType.Level1);
 
         // 初始化StatBar
         playerHPBar.Initialize(playerData.maxHP, playerData.currentHP);
