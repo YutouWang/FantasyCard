@@ -20,7 +20,7 @@ public class BossData
 
     public BossData(int stage)
     {
-        this.stage = stage;
+        //this.stage = stage;
     }
 
     // 返回 Boss 本回合技能
@@ -33,9 +33,9 @@ public class BossData
 
     public int GetAttackDamage()
     {
-        if (stage == 1) return 10;
-        if (stage == 2) return 20;
-        if (stage == 3) return 30;
+        //if (stage == 1) return 10;
+        //if (stage == 2) return 20;
+        //if (stage == 3) return 30;
         return 10;
     }
 }
