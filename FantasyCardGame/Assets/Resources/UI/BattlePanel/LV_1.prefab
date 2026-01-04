@@ -994,7 +994,7 @@ GameObject:
   - component: {fileID: 425222624089933382}
   - component: {fileID: 2923810007197580479}
   m_Layer: 5
-  m_Name: BattlePanel
+  m_Name: LV_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
