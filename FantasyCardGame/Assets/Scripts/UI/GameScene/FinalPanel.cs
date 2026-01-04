@@ -1,58 +1,146 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class FinalPanel : BasePanel
 {
+    [Header("é®ç½©ï¼ˆå¿…é¡»æ˜¯ä¸é€æ˜å…¨å± Imageï¼Œç”¨æ¥ç›–ä½ BattlePanelï¼‰")]
+    public Image maskBg;
+
     [Header("Victory Settings")]
-    public Image victoryImage;         // ÏÔÊ¾Ê¤Àû PPT
-    public Sprite[] victorySlides;     // Ê¤Àû PPT Í¼Æ¬Êı×é
-    public float slideInterval = 1.5f; // Ã¿ÕÅÍ¼Æ¬ÏÔÊ¾Ê±¼ä
-    public float fadeDuration = 0.5f;  // Ã¿ÕÅÍ¼Æ¬µ­Èëµ­³öÊ±¼ä
+    public Image victoryImage;
+    public Sprite[] victorySlides;
+    public float slideInterval = 1.5f;
+    public float fadeDuration = 0.5f;
 
     [Header("Fail Settings")]
-    public Image failImage;            // ÏÔÊ¾Ê§°ÜÍ¼Æ¬
+    public Image failImage;
     public Sprite failSlide;
-    public float failDisplayTime = 2f; // Ê§°ÜÍ¼Æ¬Í£ÁôÊ±¼ä
+    public float failDisplayTime = 2f;
 
-    private CanvasGroup victoryCanvasGroup;  // ÓÃÓÚÊ¤ÀûÍ¼Æ¬µ­Èëµ­³ö
-    private CanvasGroup failCanvasGroup;     // ÓÃÓÚÊ§°ÜÍ¼Æ¬µ­Èëµ­³ö
+    [Header("å›åˆ°å¼€å§‹ç•Œé¢æ—¶è¦æ˜¾ç¤ºçš„é¢æ¿åï¼ˆResources/UI/xxxï¼‰")]
+    public string startPanelName = "StartPanel";
+
+    private CanvasGroup victoryCanvasGroup;
+    private CanvasGroup failCanvasGroup;
     private bool isPlaying = false;
+    private bool _inited = false;
+
+    protected override void Awake()
+    {
+        base.Awake();
+        EnsureInit();
+    }
 
     public override void Init()
     {
-        // ³õÊ¼»¯ CanvasGroup
-        victoryCanvasGroup = victoryImage.GetComponent<CanvasGroup>();
-        if (victoryCanvasGroup == null)
-            victoryCanvasGroup = victoryImage.gameObject.AddComponent<CanvasGroup>();
+        // BasePanel.Start ä¼šè°ƒç”¨ä¸€æ¬¡ï¼Œè¿™é‡Œåšæˆå¹‚ç­‰
+        EnsureInit();
+    }
 
-        failCanvasGroup = failImage.GetComponent<CanvasGroup>();
-        if (failCanvasGroup == null)
-            failCanvasGroup = failImage.gameObject.AddComponent<CanvasGroup>();
+    private void EnsureInit()
+    {
+        if (_inited) return;
+        _inited = true;
 
-        // Òş²ØÍ¼Æ¬
-        victoryImage.gameObject.SetActive(false);
-        failImage.gameObject.SetActive(false);
+        // ç¡®ä¿æœ¬ Panel è‡ªå·±å°±æ˜¯å®Œå…¨å¯äº¤äº’ã€å®Œå…¨ä¸é€æ˜ï¼ˆä¸èµ° BasePanel çš„æ·¡å…¥ï¼‰
+        var rootCg = GetComponent<CanvasGroup>();
+        if (rootCg == null) rootCg = gameObject.AddComponent<CanvasGroup>();
+        rootCg.alpha = 1f;
+        rootCg.interactable = true;
+        rootCg.blocksRaycasts = true;
+
+        if (maskBg != null)
+        {
+            maskBg.gameObject.SetActive(true);
+            // å…³é”®ï¼šé®ç½©è¦ç›–ä½åº•ä¸‹
+            var c = maskBg.color;
+            c.a = 1f;
+            maskBg.color = c;
+        }
+
+        if (victoryImage != null)
+        {
+            victoryCanvasGroup = victoryImage.GetComponent<CanvasGroup>();
+            if (victoryCanvasGroup == null) victoryCanvasGroup = victoryImage.gameObject.AddComponent<CanvasGroup>();
+            victoryImage.gameObject.SetActive(false);
+            victoryCanvasGroup.alpha = 0f;
+        }
+
+        if (failImage != null)
+        {
+            failCanvasGroup = failImage.GetComponent<CanvasGroup>();
+            if (failCanvasGroup == null) failCanvasGroup = failImage.gameObject.AddComponent<CanvasGroup>();
+            failImage.gameObject.SetActive(false);
+            failCanvasGroup.alpha = 0f;
+        }
+    }
+
+    // ä¸è¦èµ° BasePanel çš„æ·¡å…¥
+    public override void ShowMe()
+    {
+        EnsureInit();
+        isShow = true;
+        var cg = GetComponent<CanvasGroup>();
+        cg.alpha = 1f;
+        cg.interactable = true;
+        cg.blocksRaycasts = true;
+    }
+
+    // ä¸è¦èµ° BasePanel çš„æ·¡å‡º
+    public override void HideMe(UnityAction callBack)
+    {
+        EnsureInit();
+        isShow = false;
+
+        var cg = GetComponent<CanvasGroup>();
+        cg.alpha = 0f;
+        cg.interactable = false;
+        cg.blocksRaycasts = false;
+
+        callBack?.Invoke();
     }
 
     private void OnEnable()
     {
+        // æ¯æ¬¡è¢« ShowPanel é‡æ–°å¯ç”¨æ—¶éƒ½é‡ç½®çŠ¶æ€
         StopAllCoroutines();
         isPlaying = false;
-        victoryImage.gameObject.SetActive(false);
-        failImage.gameObject.SetActive(false);
+
+        EnsureInit();
+
+        if (victoryImage != null) victoryImage.gameObject.SetActive(false);
+        if (failImage != null) failImage.gameObject.SetActive(false);
+
+        if (victoryCanvasGroup != null) victoryCanvasGroup.alpha = 0f;
+        if (failCanvasGroup != null) failCanvasGroup.alpha = 0f;
     }
 
-    // ²¥·ÅÊ¤Àû PPT
     public void PlayVictory()
     {
-        if (isPlaying) return;
-        isPlaying = true;
+        EnsureInit();
 
+        if (isPlaying) return;
+        if (victorySlides == null || victorySlides.Length == 0)
+        {
+            Debug.LogError("FinalPanel: victorySlides æ²¡æœ‰æ‹–ä»»ä½•å›¾ç‰‡ï¼");
+            return;
+        }
+        if (victoryImage == null)
+        {
+            Debug.LogError("FinalPanel: victoryImage æ²¡æœ‰ç»‘å®šï¼");
+            return;
+        }
+
+        isPlaying = true;
         ShowMe();
-        failImage.gameObject.SetActive(false);
+
+        if (failImage != null) failImage.gameObject.SetActive(false);
+
         victoryImage.gameObject.SetActive(true);
+        victoryCanvasGroup.alpha = 0f;
 
         StopAllCoroutines();
         StartCoroutine(PlayVictoryCoroutine());
@@ -64,29 +152,38 @@ public class FinalPanel : BasePanel
         {
             victoryImage.sprite = victorySlides[i];
 
-            // Í¼Æ¬µ­Èë
-            yield return StartCoroutine(FadeImage(victoryCanvasGroup, 0f, 1f, fadeDuration));
-
-            // µÈ´ıÏÔÊ¾Ê±¼ä
+            yield return Fade(victoryCanvasGroup, 0f, 1f, fadeDuration);
             yield return new WaitForSeconds(slideInterval);
-
-            // Í¼Æ¬µ­³ö
-            yield return StartCoroutine(FadeImage(victoryCanvasGroup, 1f, 0f, fadeDuration));
+            yield return Fade(victoryCanvasGroup, 1f, 0f, fadeDuration);
         }
 
         EndPanel();
     }
 
-    // ²¥·ÅÊ§°ÜÍ¼Æ¬
     public void PlayFail()
     {
-        if (isPlaying) return;
-        isPlaying = true;
+        EnsureInit();
 
+        if (isPlaying) return;
+        if (failSlide == null)
+        {
+            Debug.LogError("FinalPanel: failSlide æ²¡æœ‰æ‹–å›¾ç‰‡ï¼");
+            return;
+        }
+        if (failImage == null)
+        {
+            Debug.LogError("FinalPanel: failImage æ²¡æœ‰ç»‘å®šï¼");
+            return;
+        }
+
+        isPlaying = true;
         ShowMe();
-        victoryImage.gameObject.SetActive(false);
+
+        if (victoryImage != null) victoryImage.gameObject.SetActive(false);
+
         failImage.gameObject.SetActive(true);
         failImage.sprite = failSlide;
+        failCanvasGroup.alpha = 0f;
 
         StopAllCoroutines();
         StartCoroutine(PlayFailCoroutine());
@@ -94,21 +191,23 @@ public class FinalPanel : BasePanel
 
     private IEnumerator PlayFailCoroutine()
     {
-        // Í¼Æ¬µ­Èë
-        yield return StartCoroutine(FadeImage(failCanvasGroup, 0f, 1f, fadeDuration));
-
-        // µÈ´ıÏÔÊ¾Ê±¼ä
+        yield return Fade(failCanvasGroup, 0f, 1f, fadeDuration);
         yield return new WaitForSeconds(failDisplayTime);
-
-        // Í¼Æ¬µ­³ö
-        yield return StartCoroutine(FadeImage(failCanvasGroup, 1f, 0f, fadeDuration));
+        yield return Fade(failCanvasGroup, 1f, 0f, fadeDuration);
 
         EndPanel();
     }
 
-    // Í¼Æ¬µ­Èëµ­³öĞ­³Ì
-    private IEnumerator FadeImage(CanvasGroup cg, float from, float to, float duration)
+    private IEnumerator Fade(CanvasGroup cg, float from, float to, float duration)
     {
+        if (cg == null) yield break;
+
+        if (duration <= 0f)
+        {
+            cg.alpha = to;
+            yield break;
+        }
+
         float t = 0f;
         cg.alpha = from;
         while (t < duration)
@@ -120,14 +219,17 @@ public class FinalPanel : BasePanel
         cg.alpha = to;
     }
 
-    // ²¥·ÅÍê±Ïºó·µ»ØÓÎÏ·¿ªÊ¼½çÃæ
     private void EndPanel()
     {
         isPlaying = false;
-        HideMe(() =>
-        {
-            // »Øµ½ÓÎÏ·¿ªÊ¼³¡¾°
-            SceneManager.LoadScene("BeginScene");
-        });
+
+        // âœ… ç”¨ UIManager.HiddenPanel æ¥é”€æ¯è‡ªå·±å¹¶ä»å­—å…¸ç§»é™¤ï¼ˆå¦åˆ™ä¸‹æ¬¡ ShowPanel ä¼šå¤ç”¨æ—§å¯¹è±¡ï¼‰
+        UIManager.Instance.HiddenPanel("FinalPanel");
+
+        // åˆ‡å›å¼€å§‹åœºæ™¯
+        SceneManager.LoadScene("BeginScene");
+
+        // åˆ‡å›å»ä¸€å®šè¦æŠŠå¼€å§‹ UI show å‡ºæ¥ï¼Œå¦åˆ™å°±æ˜¯ç™½å±
+        //UIManager.Instance.ShowPanel("BeginPanel");
     }
 }
