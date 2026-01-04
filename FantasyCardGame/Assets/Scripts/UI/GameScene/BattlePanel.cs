@@ -8,13 +8,18 @@ using UnityEngine.UI;
 public class BattlePanel : BasePanel
 {
     [Header("区域引用")]
-    public Transform handRoot;          // 手牌容器
-    public Transform playedZone;        // 出列区（本回合已打出的牌）
-    public GameObject cardPrefab;       // CardPrefab（上面挂 CardUI）
+    public Transform handRoot;
+    public Transform playedZone;
+    public GameObject cardPrefab;
+
+    [Header("Boss Roots 素材 (每关)")]
+    public GameObject bossLv1Root;
+    public GameObject bossLv2Root;
+    public GameObject bossLv3Root;
 
     [Header("按钮 / 文本")]
-    public Button endTurnBtn;           // 结束回合按钮
-    public TMP_Text phaseHintText;      // 提示文本
+    public Button endTurnBtn;
+    public TMP_Text phaseHintText;
 
     [Header("抽牌按钮")]
     public Button drawBtn;
@@ -29,13 +34,13 @@ public class BattlePanel : BasePanel
     public StatBar bossHpBar;
 
     [Header("Boss 特效/节奏")]
-    public GameObject scratchFx;            // 抓痕图（GameObject，带 Image）
-    public float scratchShowTime = 1.5f;    // 抓痕显示时间
-    public float bossActDelay = 0.8f;       // Boss 回合开始前停顿
-    public float afterPlayerResolveDelay = 0.8f; // 玩家结算后停顿
-    public float afterBossResolveDelay = 0.8f;   // Boss 行动后停顿
-    public float playedVanishDelay = 0.15f;      // 出列牌“先消失”的停顿
-    public float stealShowTime = 1.0f;           // 偷牌提示停留时间
+    public GameObject scratchFx;
+    public float scratchShowTime = 1.5f;
+    public float bossActDelay = 2f;
+    public float afterPlayerResolveDelay = 2f;
+    public float afterBossResolveDelay = 2f;
+    public float playedVanishDelay = 0.15f;
+    public float stealShowTime = 1.5f;
 
     // 数据
     public PlayerData player = new PlayerData();
@@ -43,53 +48,59 @@ public class BattlePanel : BasePanel
 
     // 回合数据
     private int turnIndex = 1;
-    private int attackUsedThisTurn = 0;
-    private int shieldCharges = 0;      // 防御牌挡几次
+    private int shieldCharges = 0;
 
-    // 记住“上一回合最后一张打出的牌”（用于 Recall）
+    // Recall：上一回合最后一张出牌
     private CardInstance lastPlayedPrevTurn = null;
 
     // 阶段
     private enum PlayerPhase { Play, Discard }
     private PlayerPhase phase = PlayerPhase.Play;
-    private bool pendingNextTurnDiscard = false; // 结算后需要弃牌才能开下一回合
+    private bool pendingNextTurnDiscard = false;
 
+    private bool _inited = false;
 
     [Header("规则")]
-    public int maxHandSize = 5;         // 手牌上限
-    public int startHandCount = 5;      // 初始手牌（进入战斗就给）
-    public int drawEachTurn = 2;        // 每回合抽牌数（手动点 Draw 抽）
-    public int energyCostPerTurn = 10;  // 每回合扣体温/能量
+    public int maxHandSize = 5;
+    public int startHandCount = 5;
+    public int drawEachTurn = 2;
+    public int energyCostPerTurn = 10;
+
+    // 天赋（从 ProgressManager 读）
+    private TalentType Talent => ProgressManager.Instance.Data.selectedTalent;
+    private LevelType Level => ProgressManager.Instance.Data.currentLevel;
 
     public override void Init()
     {
-        // 1) 初始化牌库
-        CardDataInit initScript = LoadCardDataInit();
-        if (initScript == null) return;
+        if (_inited) return;
+        _inited = true;
 
-        List<CardInstance> deck = initScript.CreateBaseDeck();
-        CardManager.Instance.Init(deck);
-        CardManager.Instance.DrawCardsToHand(startHandCount);
+        ApplyTalentRules();
 
-        // 2) 初始化角色与血条
+        // 初始化牌库（只做一次）
+        if (!CardManager.Instance.IsInitialized)
+        {
+            CardDataInit initScript = LoadCardDataInit();
+            if (initScript == null) return;
+
+            List<CardInstance> deck = initScript.CreateBaseDeck();
+            CardManager.Instance.Init(deck);
+            CardManager.Instance.DrawCardsToHand(startHandCount); // 初始5张只给一次
+        }
+
+        // 初始化 player / boss
         player.Init();
-        boss = new BossData(LevelType.Level1);
-        boss.maxHp = 100;
-        boss.currentHp = boss.maxHp;
+        SetupBossForLevel(Level);
 
         if (playerHpBar != null) playerHpBar.Initialize(player.maxHP, player.currentHP);
         if (playerEnergyBar != null) playerEnergyBar.Initialize(player.maxEnergy, player.currentEnergy);
         if (bossHpBar != null) bossHpBar.Initialize(boss.maxHp, boss.currentHp);
 
-        // 3) 绑定按钮
+        // 绑定按钮
         if (endTurnBtn != null)
         {
             endTurnBtn.onClick.RemoveAllListeners();
             endTurnBtn.onClick.AddListener(OnEndTurnClicked);
-        }
-        else
-        {
-            Debug.LogWarning("endTurnBtn 没有绑定：请在 BattlePanel 预制体上拖入按钮");
         }
 
         if (drawBtn != null)
@@ -98,16 +109,67 @@ public class BattlePanel : BasePanel
             drawBtn.onClick.AddListener(OnDrawClicked);
         }
 
-        // 抓痕默认隐藏
         if (scratchFx != null) scratchFx.SetActive(false);
 
-        // 进入第一回合
+        // 保存 checkpoint（你有就留，没有也不影响跑）
+        ProgressManager.Instance.SaveCheckpoint(Level, player, CardManager.Instance);
+
+        // 开始本关第1回合
+        turnIndex = 1;
+        shieldCharges = 0;
+        pendingNextTurnDiscard = false;
+        lastPlayedPrevTurn = null;
+
         StartPlayerTurn();
     }
 
-    // -----------------------------
-    // 初始化：加载 CardDataInit
-    // -----------------------------
+    private void ApplyTalentRules()
+    {
+        energyCostPerTurn = 10;
+        drawEachTurn = 2;
+
+        if (Talent == TalentType.Scarf) energyCostPerTurn = 5;
+        else if (Talent == TalentType.Bear) drawEachTurn = 3;
+        // Med 在“Submerge 生效”时回血
+    }
+
+    private void SetupBossForLevel(LevelType level)
+    {
+        maxHandSize = 5; // Level1/2/3 都固定 5
+
+        //  1) 生成 Boss 数据（每关重置）
+        boss = new BossData(level);
+
+        //  2) 给每关一个 maxHp（你可以按策划改）
+        boss.maxHp = GetBossMaxHp(level);
+        boss.currentHp = boss.maxHp;
+
+        //  3) 换 Boss 视觉（最关键！）
+        ApplyBossVisual(level);
+
+        //  4) 刷血条（保险）
+        if (bossHpBar != null) bossHpBar.Initialize(boss.maxHp, boss.currentHp);
+
+        // ✅ 5) 提示：关卡 + 回合
+        UpdateHint();
+    }
+
+    private void UpdateHint(string extra = null)
+    {
+        if (phaseHintText == null) return;
+
+        string lv = $"Level {(int)Level + 1}";
+        string turn = $"Turn {turnIndex}";
+        string ph =
+            phase == PlayerPhase.Discard ? "DISCARD" :
+            (drewThisTurn ? "Player Turn" : "Click DRAW");
+
+        if (!string.IsNullOrEmpty(extra))
+            phaseHintText.text = $"{lv} - {turn} - {extra}";
+        else
+            phaseHintText.text = $"{lv} - {turn} - {ph}";
+    }
+
     private CardDataInit LoadCardDataInit()
     {
         GameObject initPrefab = Resources.Load<GameObject>(cardDataInitPath);
@@ -129,32 +191,20 @@ public class BattlePanel : BasePanel
 
     private void StartPlayerTurn()
     {
-        attackUsedThisTurn = 0;
         drewThisTurn = false;
+        phase = PlayerPhase.Play;
 
-        // Draw 可点，EndTurn 不可点（必须先抽牌）
         if (drawBtn != null) drawBtn.interactable = true;
         if (endTurnBtn != null) endTurnBtn.interactable = false;
 
-        // 回到出牌阶段（但提示会根据 drewThisTurn 显示“Click DRAW”）
         EnterPlayPhase();
     }
 
-    // -----------------------------
-    // 阶段切换
-    // -----------------------------
     private void EnterPlayPhase()
     {
         phase = PlayerPhase.Play;
+        UpdateHint();
 
-        if (phaseHintText != null)
-        {
-            phaseHintText.text = drewThisTurn
-                ? $"Turn {turnIndex} - Player Turn"
-                : $"Turn {turnIndex} - Click DRAW";
-        }
-
-        // 出列区恢复显示
         if (playedZone != null && !playedZone.gameObject.activeSelf)
             playedZone.gameObject.SetActive(true);
 
@@ -167,21 +217,15 @@ public class BattlePanel : BasePanel
         phase = PlayerPhase.Discard;
 
         int needDiscard = Mathf.Max(0, CardManager.Instance.Hand.Count - maxHandSize);
-        if (phaseHintText != null)
-            phaseHintText.text = $"Turn {turnIndex} - DISCARD PHASE: discard {needDiscard} card(s)";
+        UpdateHint($"DISCARD {needDiscard}");
 
-        // 弃牌阶段：手牌点一下=弃牌；出列区不允许撤回
         RenderHand(CardManager.Instance.Hand, OnHandCardClicked_Discard);
         RenderPlayed(CardManager.Instance.playedInThisTurn, null);
 
-        // 弃牌阶段 EndTurn 可点（用于确认/继续）
         if (endTurnBtn != null) endTurnBtn.interactable = true;
         if (drawBtn != null) drawBtn.interactable = false;
     }
 
-    // -----------------------------
-    // 渲染
-    // -----------------------------
     private void RenderHand(List<CardInstance> hand, UnityAction<CardInstance> onClick)
     {
         for (int i = handRoot.childCount - 1; i >= 0; i--)
@@ -208,40 +252,39 @@ public class BattlePanel : BasePanel
         }
     }
 
-    // -----------------------------
-    // 点击回调：出牌 / 撤回 / 弃牌 / 抽牌
-    // -----------------------------
+    private bool HasAttackInPlayedThisTurn()
+    {
+        List<CardInstance> played = CardManager.Instance.playedInThisTurn;
+        for (int i = 0; i < played.Count; i++)
+            if (played[i].cardTemplate.cardType == CardType.Attack) return true;
+        return false;
+    }
+
     private void OnHandCardClicked_Play(CardInstance card)
     {
         if (!drewThisTurn)
         {
-            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Draw first!";
+            UpdateHint("Draw first!");
             return;
         }
-
         if (card == null) return;
 
         CardType type = card.cardTemplate.cardType;
 
-        // 规则：第一回合不能出回收牌
         if (turnIndex == 1 && type == CardType.Recall)
         {
-            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Recall can't be used in Turn 1";
+            UpdateHint("Recall can't be used in Turn 1");
             return;
         }
 
-        // 规则：每回合只能出 1 张攻击牌
-        if (type == CardType.Attack && attackUsedThisTurn >= 1)
+        if (type == CardType.Attack && HasAttackInPlayedThisTurn())
         {
-            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Only 1 Attack per turn";
+            UpdateHint("Only 1 Attack per turn");
             return;
         }
 
         if (CardManager.Instance.TryPlayToTable(card))
-        {
-            if (type == CardType.Attack) attackUsedThisTurn++;
             EnterPlayPhase();
-        }
     }
 
     private void OnPlayedCardClicked_Undo(CardInstance card)
@@ -252,26 +295,23 @@ public class BattlePanel : BasePanel
 
     private void OnHandCardClicked_Discard(CardInstance card)
     {
-        if (CardManager.Instance.DiscardFromHand(card))
+        if (!CardManager.Instance.DiscardFromHand(card)) return;
+
+        if (CardManager.Instance.Hand.Count > maxHandSize)
         {
-            if (CardManager.Instance.Hand.Count > maxHandSize)
-            {
-                EnterDiscardPhase();
-            }
-            else
-            {
-                if (pendingNextTurnDiscard)
-                {
-                    pendingNextTurnDiscard = false;
-                    turnIndex++;
-                    StartPlayerTurn();   // 直接进下一回合（不要再结算一次）
-                }
-                else
-                {
-                    StartCoroutine(ResolveEndTurnRoutine()); // 这是“结算前弃牌”才会走到这
-                }
-            }
+            EnterDiscardPhase();
+            return;
         }
+
+        if (pendingNextTurnDiscard)
+        {
+            pendingNextTurnDiscard = false;
+            turnIndex++;
+            StartPlayerTurn();
+            return;
+        }
+
+        StartCoroutine(ResolveEndTurnRoutine());
     }
 
     private void OnDrawClicked()
@@ -284,15 +324,11 @@ public class BattlePanel : BasePanel
         if (drawBtn != null) drawBtn.interactable = false;
         if (endTurnBtn != null) endTurnBtn.interactable = true;
 
-        EnterPlayPhase(); // 刷新提示/渲染
+        EnterPlayPhase();
     }
 
-    // -----------------------------
-    // EndTurn
-    // -----------------------------
     private void OnEndTurnClicked()
     {
-        // 弃牌阶段
         if (phase == PlayerPhase.Discard)
         {
             if (CardManager.Instance.Hand.Count > maxHandSize)
@@ -301,7 +337,6 @@ public class BattlePanel : BasePanel
                 return;
             }
 
-            // 如果是结算后弃牌：弃够了就直接开下一回合
             if (pendingNextTurnDiscard)
             {
                 pendingNextTurnDiscard = false;
@@ -314,7 +349,6 @@ public class BattlePanel : BasePanel
             return;
         }
 
-        // 出牌阶段：若超上限进入弃牌，否则结算
         if (CardManager.Instance.Hand.Count > maxHandSize)
         {
             EnterDiscardPhase();
@@ -324,40 +358,34 @@ public class BattlePanel : BasePanel
         StartCoroutine(ResolveEndTurnRoutine());
     }
 
-    // -----------------------------
-    // 回合结算协程（你要改节奏就改这里）
-    // -----------------------------
     private IEnumerator ResolveEndTurnRoutine()
     {
-        // 锁按钮（防连点）
         if (endTurnBtn != null) endTurnBtn.interactable = false;
         if (drawBtn != null) drawBtn.interactable = false;
 
-        // 先把手牌/出列都禁用点击（但仍显示）
         RenderHand(CardManager.Instance.Hand, null);
         RenderPlayed(CardManager.Instance.playedInThisTurn, null);
 
-        if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Resolving...";
+        UpdateHint("Resolving...");
 
-        // 0) 本回合扣体温/能量（只扣一次）
+        // 0) 扣体温/能量
         player.ConsumeEnergy(energyCostPerTurn);
         if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
-
         if (player.currentEnergy <= 0)
         {
             Lose("Energy depleted");
             yield break;
         }
 
-        // 1) 出列牌先“消失”（视觉上）
+        // 1) 出列区先隐藏
         if (playedZone != null) playedZone.gameObject.SetActive(false);
         if (playedVanishDelay > 0f) yield return new WaitForSeconds(playedVanishDelay);
 
-        // 2) 记录“本回合最后一张出牌”（用于下回合 Recall）
+        // 2) 记录本回合最后一张出牌
         List<CardInstance> played = CardManager.Instance.playedInThisTurn;
         CardInstance lastPlayedThisTurn = (played != null && played.Count > 0) ? played[played.Count - 1] : null;
 
-        // 3) 结算玩家出列牌
+        // 3) 玩家结算
         bool recallTriggered = false;
 
         for (int i = 0; i < played.Count; i++)
@@ -375,7 +403,6 @@ public class BattlePanel : BasePanel
             }
             else if (type == CardType.Recovery)
             {
-                // 临时策略：缺啥补啥（你之后换成弹窗选择）
                 float hpRatio = (float)player.currentHP / player.maxHP;
                 float enRatio = (float)player.currentEnergy / player.maxEnergy;
                 if (hpRatio <= enRatio) player.Heal(12);
@@ -383,112 +410,95 @@ public class BattlePanel : BasePanel
             }
             else if (type == CardType.Recall)
             {
-                // Recall：把“上一回合最后一张出牌”回收到手牌（第一回合已被禁止出）
+                // 你现在的设计：本回合出几张 Recall 都只触发一次
                 if (!recallTriggered)
                 {
                     recallTriggered = true;
-
                     if (lastPlayedPrevTurn != null)
-                    {
                         CardManager.Instance.TryRecallSpecificToHand(lastPlayedPrevTurn);
-                        // 需要你在 CardManager 加一个函数（我下面给你）
-                    }
                 }
             }
         }
 
-        // 4) 刷条（玩家结算完 → Boss 掉血/回血清楚可见）
         if (bossHpBar != null) bossHpBar.UpdateValue(boss.currentHp);
         if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
         if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
 
         if (afterPlayerResolveDelay > 0f)
         {
-            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Player effects resolved";
+            UpdateHint("Player effects resolved");
             yield return new WaitForSeconds(afterPlayerResolveDelay);
         }
 
-        // 5) 判胜
+        // 4) 判胜 → 处理换关
         if (boss.IsDead())
         {
-            Win();
+            yield return StartCoroutine(HandleBossDefeatedRoutine());
             yield break;
         }
 
-        // 6) Boss 回合（延迟 + 行动）
-        if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Boss Turn...";
+        // 5) Boss 行动
+        UpdateHint("Boss Turn...");
         if (bossActDelay > 0f) yield return new WaitForSeconds(bossActDelay);
 
         int skill = boss.GetRandomSkill();
-        if (skill == 0)
-        {
-            yield return StartCoroutine(BossAttackRoutine());
-        }
-        else
-        {
-            yield return StartCoroutine(BossStealRoutine());
-        }
+        if (skill == 0) yield return StartCoroutine(BossAttackRoutine());
+        else yield return StartCoroutine(BossStealRoutine());
 
         if (afterBossResolveDelay > 0f)
         {
-            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Boss action resolved";
+            UpdateHint("Boss action resolved");
             yield return new WaitForSeconds(afterBossResolveDelay);
         }
 
-        // 7) 判负
+        // 6) 判负
         if (!player.isAlive || player.currentEnergy <= 0)
         {
             Lose("HP/Energy depleted");
             yield break;
         }
 
-        // 8) 更新“上一回合最后一张出牌”
+        // 7) 更新 Recall 记录
         lastPlayedPrevTurn = lastPlayedThisTurn;
 
-        // 9) 出列牌回库 & 清空出列
+        // 8) 回库
         CardManager.Instance.ReturnPlayedToBaseDeck();
 
-        for (int i = playedZone.childCount - 1; i >= 0; i--)
-            Destroy(playedZone.GetChild(i).gameObject);
-
-        // 结算完如果超手牌上限：先弃牌，弃够了才进下一回合
+        // 9) 结算后弃牌
         if (CardManager.Instance.Hand.Count > maxHandSize)
         {
             pendingNextTurnDiscard = true;
-
             EnterDiscardPhase();
-
-            // 按钮状态：弃牌阶段一般不给 Draw
-            if (drawBtn != null) drawBtn.interactable = false;
-            if (endTurnBtn != null) endTurnBtn.interactable = true;
-
-            yield break; //不进入下一回合
+            yield break;
         }
-
-
-        
 
         // 10) 下一回合
         turnIndex++;
         StartPlayerTurn();
     }
 
-    // -----------------------------
-    // Boss：攻击（抓痕 + 扣血）
-    // -----------------------------
     private IEnumerator BossAttackRoutine()
     {
-        if (phaseHintText != null) phaseHintText.text = "Boss attacks!";
+        UpdateHint("Boss attacks!");
 
         if (scratchFx != null) scratchFx.SetActive(true);
         if (scratchShowTime > 0f) yield return new WaitForSeconds(scratchShowTime);
         if (scratchFx != null) scratchFx.SetActive(false);
 
         int damage = boss.GetAttackDamage();
+
         if (shieldCharges > 0)
         {
             shieldCharges--;
             damage = 0;
+
+            if (Talent == TalentType.Med)
+            {
+                player.Heal(5);
+                if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
+            }
+
+            UpdateHint("Submerge blocked the attack!");
         }
 
         player.TakeDamage(damage);
@@ -497,31 +507,103 @@ public class BattlePanel : BasePanel
         yield return null;
     }
 
-    // -----------------------------
-    // Boss：偷牌（简化版：随机偷 1 张回库）
-    // -----------------------------
     private IEnumerator BossStealRoutine()
     {
-        if (phaseHintText != null) phaseHintText.text = "Boss steals a card!";
-
-        if (CardManager.Instance.Hand.Count > 0)
+        // ✅ 手牌空了就不要偷了，直接改成攻击（你刚说的）
+        if (CardManager.Instance.Hand.Count <= 0)
         {
-            int idx = Random.Range(0, CardManager.Instance.Hand.Count);
-            CardInstance stolen = CardManager.Instance.Hand[idx];
-
-            CardManager.Instance.Hand.RemoveAt(idx);
-            CardManager.Instance.ReturnCardToBaseDeck(stolen);
-
-            // 刷一下手牌，让玩家看到少了一张（Boss 回合禁用点击）
-            RenderHand(CardManager.Instance.Hand, null);
+            yield return StartCoroutine(BossAttackRoutine());
+            yield break;
         }
+
+        UpdateHint("Boss steals a card!");
+
+        if (shieldCharges > 0)
+        {
+            shieldCharges--;
+
+            if (Talent == TalentType.Med)
+            {
+                player.Heal(5);
+                if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
+            }
+
+            UpdateHint("Submerge blocked the steal!");
+            if (stealShowTime > 0f) yield return new WaitForSeconds(stealShowTime);
+            yield break;
+        }
+
+        int idx = Random.Range(0, CardManager.Instance.Hand.Count);
+        CardInstance stolen = CardManager.Instance.Hand[idx];
+        CardManager.Instance.Hand.RemoveAt(idx);
+        CardManager.Instance.ReturnCardToBaseDeck(stolen);
+
+        RenderHand(CardManager.Instance.Hand, null);
 
         if (stealShowTime > 0f) yield return new WaitForSeconds(stealShowTime);
     }
 
-    // -----------------------------
-    // Win / Lose
-    // -----------------------------
+    private IEnumerator HandleBossDefeatedRoutine()
+    {
+        LevelType lv = ProgressManager.Instance.Data.currentLevel;
+
+        // 最后一关才真 WIN
+        if (lv == LevelType.Level3)
+        {
+            Win();
+            yield break;
+        }
+
+        UpdateHint("STAGE CLEAR!");
+        yield return new WaitForSeconds(1.0f);
+
+        // 关卡结束恢复（按你策划：san+10 temp+30；你 san=hp temp=energy）
+        player.Heal(10);
+        player.RecoverEnergy(30);
+        if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
+        if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
+
+        // 下一关
+        LevelType next = NextLevel(lv);
+        ProgressManager.Instance.Data.currentLevel = next;
+
+        // 出列回库
+        CardManager.Instance.ReturnPlayedToBaseDeck();
+
+        // 清理本关的临时状态，防止带到下一关
+        pendingNextTurnDiscard = false;
+        lastPlayedPrevTurn = null;
+        drewThisTurn = false;
+        shieldCharges = 0;
+
+        // 清空出列区显示（你现在可能只回库但UI没彻底清）
+        if (playedZone != null)
+        {
+            playedZone.gameObject.SetActive(true);
+            for (int i = playedZone.childCount - 1; i >= 0; i--)
+                Destroy(playedZone.GetChild(i).gameObject);
+        }
+
+        // 换 Boss（数据 + 视觉）
+        SetupBossForLevel(next);
+
+        // 保存 checkpoint（新关开局）
+        ProgressManager.Instance.SaveCheckpoint(next, player, CardManager.Instance);
+
+        // 新关从 Turn1 开始
+        turnIndex = 1;
+
+        // 切关后强制刷新弃牌阶段判断
+        if (CardManager.Instance.Hand.Count > maxHandSize)
+        {
+            pendingNextTurnDiscard = true;
+            EnterDiscardPhase();
+            yield break; // 让玩家先弃牌再开始下一回合
+        }
+
+        StartPlayerTurn();
+    }
+
     private void Win()
     {
         if (bossHpBar != null) bossHpBar.UpdateValue(boss.currentHp);
@@ -533,9 +615,55 @@ public class BattlePanel : BasePanel
 
     private void Lose(string reason)
     {
+        Debug.Log("LOSE: " + reason);
+
+        // Level2：回到 Level2 开局 checkpoint
+        if (Level == LevelType.Level2)
+        {
+            bool ok = ProgressManager.Instance.TryLoadCheckpoint(LevelType.Level2, player, CardManager.Instance);
+            if (ok)
+            {
+                shieldCharges = 0;
+                lastPlayedPrevTurn = null;
+                pendingNextTurnDiscard = false;
+                drewThisTurn = false;
+
+                SetupBossForLevel(LevelType.Level2);
+
+                if (playerHpBar != null) playerHpBar.Initialize(player.maxHP, player.currentHP);
+                if (playerEnergyBar != null) playerEnergyBar.Initialize(player.maxEnergy, player.currentEnergy);
+                if (bossHpBar != null) bossHpBar.Initialize(boss.maxHp, boss.currentHp);
+
+                turnIndex = 1;
+                StartPlayerTurn();
+                return;
+            }
+        }
+
+        // 其他关：结束
         if (phaseHintText != null) phaseHintText.text = "LOSE!";
         if (endTurnBtn != null) endTurnBtn.interactable = false;
         if (drawBtn != null) drawBtn.interactable = false;
-        Debug.Log("LOSE: " + reason);
+    }
+
+    private LevelType NextLevel(LevelType lv)
+    {
+        if (lv == LevelType.Level1) return LevelType.Level2;
+        if (lv == LevelType.Level2) return LevelType.Level3;
+        return LevelType.Level3;
+    }
+
+    private int GetBossMaxHp(LevelType lv)
+    {
+        if (lv == LevelType.Level1) return 100;
+        if (lv == LevelType.Level2) return 140;
+        return 180;
+    }
+
+    private void ApplyBossVisual(LevelType lv)
+    {
+        if (bossLv1Root != null) bossLv1Root.SetActive(lv == LevelType.Level1);
+        if (bossLv2Root != null) bossLv2Root.SetActive(lv == LevelType.Level2);
+        if (bossLv3Root != null) bossLv3Root.SetActive(lv == LevelType.Level3);
     }
 }

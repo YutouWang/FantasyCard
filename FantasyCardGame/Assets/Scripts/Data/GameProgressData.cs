@@ -24,7 +24,7 @@ public enum TalentType
 public class GameProgressData
 {
     //默认一开始是关卡1
-    LevelType currentLevel = LevelType.Level1;
+    public LevelType currentLevel = LevelType.Level1;
 
     //这里的数值是每关结束后继承的san 和 temperature
     public float playerSan = 100;
@@ -33,18 +33,14 @@ public class GameProgressData
     //天赋默认选择围巾吧
     public TalentType selectedTalent = TalentType.Scarf;
 
+    //手牌上限
+    public int maxHandSize = 5;
+
     //玩家的手牌（当前拥有的牌情况,下一关会继承本关卡的手牌）
     public List<CardInstance> playerHandCards = new List<CardInstance>();
 
-    //玩家获得的奖励牌
-    public List<CardInstance> rewardsCards = new List<CardInstance>();
-
     //大牌库 baseDeck
     public List<CardInstance> baseDeck = new List<CardInstance>();
-    //奖励牌库 rewardCards
-    public List<CardInstance> rewardDeck = new List<CardInstance>();
 
-    //手牌上限
-    public int maxHandSize;
 
 }

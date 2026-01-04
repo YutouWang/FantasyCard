@@ -38,6 +38,10 @@ public class CardManager
     //私有构造 防止外部new 实例
     private CardManager() { }
 
+    //属性
+    public bool IsInitialized => _baseDeck != null;
+
+
 
     //向外部提供的方法
 
@@ -169,7 +173,7 @@ public class CardManager
     public void ReturnCardToBaseDeck(CardInstance card)
     {
         if (card == null) return;
-        if (_baseDeck == null) return;
+        if (_baseDeck == null) _baseDeck = new List<CardInstance>();
         _baseDeck.Add(card);
     }
 
@@ -177,16 +181,84 @@ public class CardManager
     public bool TryRecallSpecificToHand(CardInstance target)
     {
         if (target == null) return false;
-        if (_baseDeck == null) return false;
 
-        int idx = _baseDeck.IndexOf(target);
-        if (idx < 0) return false;  // 牌库里找不到就算了
+        // 1) 先从 baseDeck 找
+        if (_baseDeck != null)
+        {
+            int idx = _baseDeck.IndexOf(target);
+            if (idx >= 0)
+            {
+                _baseDeck.RemoveAt(idx);
+                Hand.Add(target);
+                return true;
+            }
+        }
 
-        _baseDeck.RemoveAt(idx);
-        Hand.Add(target);
-        return true;
+        // 2) 再从 played 找（万一还在场上）
+        int p = playedInThisTurn.IndexOf(target);
+        if (p >= 0)
+        {
+            playedInThisTurn.RemoveAt(p);
+            Hand.Add(target);
+            return true;
+        }
+
+        return false;
     }
 
 
+
+    public List<CardInstance> CloneDeck()
+    {
+        var copy = new List<CardInstance>(_baseDeck.Count);
+        for (int i = 0; i < _baseDeck.Count; i++)
+            copy.Add(new CardInstance(_baseDeck[i].cardTemplate, _baseDeck[i].deckType));
+        return copy;
+    }
+
+    public List<CardInstance> CloneHand()
+    {
+        var copy = new List<CardInstance>(Hand.Count);
+        for (int i = 0; i < Hand.Count; i++)
+            copy.Add(new CardInstance(Hand[i].cardTemplate, Hand[i].deckType));
+        return copy;
+    }
+
+    public void SetState(List<CardInstance> baseDeck, List<CardInstance> hand)
+    {
+        _baseDeck = baseDeck;
+        Hand.Clear();
+        Hand.AddRange(hand);
+
+        playedInThisTurn.Clear();
+        lastPlayed = null;
+    }
+
+    // 给 ProgressManager 存档用：复制“列表内容”（引用快照即可）
+    public List<CardInstance> GetBaseDeckSnapshot()
+    {
+        return _baseDeck == null ? new List<CardInstance>() : new List<CardInstance>(_baseDeck);
+    }
+
+    public List<CardInstance> GetHandSnapshot()
+    {
+        return new List<CardInstance>(Hand);
+    }
+
+    // 用于从 checkpoint 恢复
+    public void SetDeckAndHand(List<CardInstance> deck, List<CardInstance> hand)
+    {
+        _baseDeck = deck == null ? new List<CardInstance>() : new List<CardInstance>(deck);
+
+        Hand.Clear();
+        if (hand != null) Hand.AddRange(hand);
+
+        playedInThisTurn.Clear();
+        lastPlayed = null;
+    }
+
+    
+
+    
 
 }
