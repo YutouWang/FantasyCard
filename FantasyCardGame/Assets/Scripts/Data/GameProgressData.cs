@@ -5,7 +5,7 @@ using UnityEngine;
 //关卡枚举 确保只有三关
 public enum LevelType
 {
-    Level1=1,
+    Level1,
     Level2,
     Level3
 }

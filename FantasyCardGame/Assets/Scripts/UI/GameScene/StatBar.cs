@@ -38,26 +38,11 @@ public class StatBar : MonoBehaviour
 
     void Update()
     {
-        
         //插值处理血条变化情况
         if (displayedValue != currentValue)
         {
             displayedValue = Mathf.Lerp(displayedValue, currentValue, Time.deltaTime * smoothSpeed);
             slider.value = displayedValue;
         }
-        
-
-        /*
-        if (slider == null) return;
-
-        if (!Mathf.Approximately(displayedValue, currentValue))
-        {
-            // 每秒走 maxValue * smoothSpeed 的量，可以调 smoothSpeed
-            float step = maxValue * smoothSpeed * Time.deltaTime;
-            displayedValue = Mathf.MoveTowards(displayedValue, currentValue, step);
-            slider.value = displayedValue;
-        }
-        */
-
     }
 }
