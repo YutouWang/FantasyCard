@@ -80,6 +80,9 @@ public class CardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
             //这里不知道为啥不能写成判空处理(更保险) OnCardClicked?.Invoke(cardInstance);
             OnCardClicked.Invoke(cardInstance);
         });
+
+        Debug.Log($"Bind: {instance.cardTemplate.cardName} type={instance.cardTemplate.cardType} sprite={instance.cardTemplate.cardSprite?.name} desc={instance.cardTemplate.cardDescription}");
+
     }
 
     //鼠标悬停在此处时执行的逻辑  这是悬停检测函数（类似于碰撞检测函数那种）

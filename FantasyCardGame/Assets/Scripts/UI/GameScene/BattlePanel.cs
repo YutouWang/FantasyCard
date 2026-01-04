@@ -1,4 +1,4 @@
-using System;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -7,49 +7,71 @@ using UnityEngine.UI;
 
 public class BattlePanel : BasePanel
 {
-    [Header("ÇøÓòÒıÓÃ")]
-    public Transform handRoot;          // ÊÖÅÆÈİÆ÷
-    public Transform playedZone;        // ³öÁĞÇø£¨±¾»ØºÏÒÑ´ò³öµÄÅÆ£©
-    public GameObject cardPrefab;       // CardPrefab£¨ÉÏÃæ¹Ò CardUI£©
+    [Header("åŒºåŸŸå¼•ç”¨")]
+    public Transform handRoot;          // æ‰‹ç‰Œå®¹å™¨
+    public Transform playedZone;        // å‡ºåˆ—åŒºï¼ˆæœ¬å›åˆå·²æ‰“å‡ºçš„ç‰Œï¼‰
+    public GameObject cardPrefab;       // CardPrefabï¼ˆä¸Šé¢æŒ‚ CardUIï¼‰
 
-    [Header("°´Å¥ / ÎÄ±¾")]
-    public Button endTurnBtn;           // ½áÊø»ØºÏ°´Å¥
-    public TMP_Text phaseHintText;      // ÌáÊ¾ÎÄ±¾£ºPlayer Turn / Discard X
+    [Header("æŒ‰é’® / æ–‡æœ¬")]
+    public Button endTurnBtn;           // ç»“æŸå›åˆæŒ‰é’®
+    public TMP_Text phaseHintText;      // æç¤ºæ–‡æœ¬
 
-    [Header("Resources Â·¾¶")]
+    [Header("æŠ½ç‰ŒæŒ‰é’®")]
+    public Button drawBtn;
+    private bool drewThisTurn = false;
+
+    [Header("Resources è·¯å¾„")]
     public string cardDataInitPath = "Card/CardDataInit";
 
-    [Header("ÑªÌõ")]
+    [Header("è¡€æ¡")]
     public StatBar playerHpBar;
     public StatBar playerEnergyBar;
     public StatBar bossHpBar;
 
-    // Êı¾İ
+    [Header("Boss ç‰¹æ•ˆ/èŠ‚å¥")]
+    public GameObject scratchFx;            // æŠ“ç—•å›¾ï¼ˆGameObjectï¼Œå¸¦ Imageï¼‰
+    public float scratchShowTime = 1.5f;    // æŠ“ç—•æ˜¾ç¤ºæ—¶é—´
+    public float bossActDelay = 0.8f;       // Boss å›åˆå¼€å§‹å‰åœé¡¿
+    public float afterPlayerResolveDelay = 0.8f; // ç©å®¶ç»“ç®—ååœé¡¿
+    public float afterBossResolveDelay = 0.8f;   // Boss è¡ŒåŠ¨ååœé¡¿
+    public float playedVanishDelay = 0.15f;      // å‡ºåˆ—ç‰Œâ€œå…ˆæ¶ˆå¤±â€çš„åœé¡¿
+    public float stealShowTime = 1.0f;           // å·ç‰Œæç¤ºåœç•™æ—¶é—´
+
+    // æ•°æ®
     public PlayerData player = new PlayerData();
     private BossData boss;
 
-    // ½×¶Î
+    // å›åˆæ•°æ®
+    private int turnIndex = 1;
+    private int attackUsedThisTurn = 0;
+    private int shieldCharges = 0;      // é˜²å¾¡ç‰ŒæŒ¡å‡ æ¬¡
+
+    // è®°ä½â€œä¸Šä¸€å›åˆæœ€åä¸€å¼ æ‰“å‡ºçš„ç‰Œâ€ï¼ˆç”¨äº Recallï¼‰
+    private CardInstance lastPlayedPrevTurn = null;
+
+    // é˜¶æ®µ
     private enum PlayerPhase { Play, Discard }
     private PlayerPhase phase = PlayerPhase.Play;
+    private bool pendingNextTurnDiscard = false; // ç»“ç®—åéœ€è¦å¼ƒç‰Œæ‰èƒ½å¼€ä¸‹ä¸€å›åˆ
 
-    [Header("¹æÔò")]
-    public int maxHandSize = 5;         // ÊÖÅÆÉÏÏŞ£¨1/2¹Ø = 5£©
-    public int startHandCount = 5;      // ³õÊ¼ÊÖÅÆ
-    public int drawEachTurn = 2;        // Ã¿»ØºÏ³éÅÆÊı
-    public int energyCostPerTurn = 10;  // Ã¿»ØºÏ¿ÛÌåÎÂ/ÄÜÁ¿
-    private int shieldCharges = 0;      // ·ÀÓùÅÆµ²¼¸´Î
+
+    [Header("è§„åˆ™")]
+    public int maxHandSize = 5;         // æ‰‹ç‰Œä¸Šé™
+    public int startHandCount = 5;      // åˆå§‹æ‰‹ç‰Œï¼ˆè¿›å…¥æˆ˜æ–—å°±ç»™ï¼‰
+    public int drawEachTurn = 2;        // æ¯å›åˆæŠ½ç‰Œæ•°ï¼ˆæ‰‹åŠ¨ç‚¹ Draw æŠ½ï¼‰
+    public int energyCostPerTurn = 10;  // æ¯å›åˆæ‰£ä½“æ¸©/èƒ½é‡
 
     public override void Init()
     {
-        // 1) ³õÊ¼»¯ÅÆ¿â
+        // 1) åˆå§‹åŒ–ç‰Œåº“
         CardDataInit initScript = LoadCardDataInit();
         if (initScript == null) return;
 
         List<CardInstance> deck = initScript.CreateBaseDeck();
-        CardManager.Instance.Init(deck);           // °Ñ deck ½»¸ø CardManager ¹Ü
+        CardManager.Instance.Init(deck);
         CardManager.Instance.DrawCardsToHand(startHandCount);
 
-        // 2) ³õÊ¼»¯½ÇÉ«ÓëÑªÌõ
+        // 2) åˆå§‹åŒ–è§’è‰²ä¸è¡€æ¡
         player.Init();
         boss = new BossData(LevelType.Level1);
         boss.maxHp = 100;
@@ -59,7 +81,7 @@ public class BattlePanel : BasePanel
         if (playerEnergyBar != null) playerEnergyBar.Initialize(player.maxEnergy, player.currentEnergy);
         if (bossHpBar != null) bossHpBar.Initialize(boss.maxHp, boss.currentHp);
 
-        // 3) °ó¶¨ EndTurn °´Å¥
+        // 3) ç»‘å®šæŒ‰é’®
         if (endTurnBtn != null)
         {
             endTurnBtn.onClick.RemoveAllListeners();
@@ -67,22 +89,31 @@ public class BattlePanel : BasePanel
         }
         else
         {
-            Debug.LogWarning("endTurnBtn Ã»ÓĞ°ó¶¨£ºÇëÔÚ BattlePanel Ô¤ÖÆÌåÉÏÍÏÈë°´Å¥");
+            Debug.LogWarning("endTurnBtn æ²¡æœ‰ç»‘å®šï¼šè¯·åœ¨ BattlePanel é¢„åˆ¶ä½“ä¸Šæ‹–å…¥æŒ‰é’®");
         }
 
-        // 4) ½øÈë³öÅÆ½×¶Î£¨Ë¢ĞÂUI£©
-        EnterPlayPhase();
+        if (drawBtn != null)
+        {
+            drawBtn.onClick.RemoveAllListeners();
+            drawBtn.onClick.AddListener(OnDrawClicked);
+        }
+
+        // æŠ“ç—•é»˜è®¤éšè—
+        if (scratchFx != null) scratchFx.SetActive(false);
+
+        // è¿›å…¥ç¬¬ä¸€å›åˆ
+        StartPlayerTurn();
     }
 
     // -----------------------------
-    // ³õÊ¼»¯£º¼ÓÔØ CardDataInit
+    // åˆå§‹åŒ–ï¼šåŠ è½½ CardDataInit
     // -----------------------------
     private CardDataInit LoadCardDataInit()
     {
         GameObject initPrefab = Resources.Load<GameObject>(cardDataInitPath);
         if (initPrefab == null)
         {
-            Debug.LogError("Ã»ÓĞÔÚ Resources/" + cardDataInitPath + " ÕÒµ½ CardDataInit prefab");
+            Debug.LogError("æ²¡æœ‰åœ¨ Resources/" + cardDataInitPath + " æ‰¾åˆ° CardDataInit prefab");
             return null;
         }
 
@@ -90,19 +121,42 @@ public class BattlePanel : BasePanel
         CardDataInit initScript = initObj.GetComponent<CardDataInit>();
         if (initScript == null)
         {
-            Debug.LogError("CardDataInit Ô¤ÖÆÌåÉÏÃ»ÓĞ CardDataInit ½Å±¾");
+            Debug.LogError("CardDataInit é¢„åˆ¶ä½“ä¸Šæ²¡æœ‰ CardDataInit è„šæœ¬");
             return null;
         }
         return initScript;
     }
 
+    private void StartPlayerTurn()
+    {
+        attackUsedThisTurn = 0;
+        drewThisTurn = false;
+
+        // Draw å¯ç‚¹ï¼ŒEndTurn ä¸å¯ç‚¹ï¼ˆå¿…é¡»å…ˆæŠ½ç‰Œï¼‰
+        if (drawBtn != null) drawBtn.interactable = true;
+        if (endTurnBtn != null) endTurnBtn.interactable = false;
+
+        // å›åˆ°å‡ºç‰Œé˜¶æ®µï¼ˆä½†æç¤ºä¼šæ ¹æ® drewThisTurn æ˜¾ç¤ºâ€œClick DRAWâ€ï¼‰
+        EnterPlayPhase();
+    }
+
     // -----------------------------
-    // ½×¶ÎÇĞ»»
+    // é˜¶æ®µåˆ‡æ¢
     // -----------------------------
     private void EnterPlayPhase()
     {
         phase = PlayerPhase.Play;
-        if (phaseHintText != null) phaseHintText.text = "Player Turn";
+
+        if (phaseHintText != null)
+        {
+            phaseHintText.text = drewThisTurn
+                ? $"Turn {turnIndex} - Player Turn"
+                : $"Turn {turnIndex} - Click DRAW";
+        }
+
+        // å‡ºåˆ—åŒºæ¢å¤æ˜¾ç¤º
+        if (playedZone != null && !playedZone.gameObject.activeSelf)
+            playedZone.gameObject.SetActive(true);
 
         RenderHand(CardManager.Instance.Hand, OnHandCardClicked_Play);
         RenderPlayed(CardManager.Instance.playedInThisTurn, OnPlayedCardClicked_Undo);
@@ -111,16 +165,22 @@ public class BattlePanel : BasePanel
     private void EnterDiscardPhase()
     {
         phase = PlayerPhase.Discard;
-        int needDiscard = Mathf.Max(0, CardManager.Instance.Hand.Count - maxHandSize);
-        if (phaseHintText != null) phaseHintText.text = $"Discard {needDiscard}";
 
-        // ÆúÅÆ½×¶Î£ºÊÖÅÆµãÒ»ÏÂ = ÆúÅÆ£»³öÁĞÇø²»ÔÊĞí³·»Ø
+        int needDiscard = Mathf.Max(0, CardManager.Instance.Hand.Count - maxHandSize);
+        if (phaseHintText != null)
+            phaseHintText.text = $"Turn {turnIndex} - DISCARD PHASE: discard {needDiscard} card(s)";
+
+        // å¼ƒç‰Œé˜¶æ®µï¼šæ‰‹ç‰Œç‚¹ä¸€ä¸‹=å¼ƒç‰Œï¼›å‡ºåˆ—åŒºä¸å…è®¸æ’¤å›
         RenderHand(CardManager.Instance.Hand, OnHandCardClicked_Discard);
         RenderPlayed(CardManager.Instance.playedInThisTurn, null);
+
+        // å¼ƒç‰Œé˜¶æ®µ EndTurn å¯ç‚¹ï¼ˆç”¨äºç¡®è®¤/ç»§ç»­ï¼‰
+        if (endTurnBtn != null) endTurnBtn.interactable = true;
+        if (drawBtn != null) drawBtn.interactable = false;
     }
 
     // -----------------------------
-    // äÖÈ¾
+    // æ¸²æŸ“
     // -----------------------------
     private void RenderHand(List<CardInstance> hand, UnityAction<CardInstance> onClick)
     {
@@ -149,12 +209,39 @@ public class BattlePanel : BasePanel
     }
 
     // -----------------------------
-    // µã»÷»Øµ÷£º³öÅÆ / ³·»Ø / ÆúÅÆ
+    // ç‚¹å‡»å›è°ƒï¼šå‡ºç‰Œ / æ’¤å› / å¼ƒç‰Œ / æŠ½ç‰Œ
     // -----------------------------
     private void OnHandCardClicked_Play(CardInstance card)
     {
+        if (!drewThisTurn)
+        {
+            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Draw first!";
+            return;
+        }
+
+        if (card == null) return;
+
+        CardType type = card.cardTemplate.cardType;
+
+        // è§„åˆ™ï¼šç¬¬ä¸€å›åˆä¸èƒ½å‡ºå›æ”¶ç‰Œ
+        if (turnIndex == 1 && type == CardType.Recall)
+        {
+            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Recall can't be used in Turn 1";
+            return;
+        }
+
+        // è§„åˆ™ï¼šæ¯å›åˆåªèƒ½å‡º 1 å¼ æ”»å‡»ç‰Œ
+        if (type == CardType.Attack && attackUsedThisTurn >= 1)
+        {
+            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Only 1 Attack per turn";
+            return;
+        }
+
         if (CardManager.Instance.TryPlayToTable(card))
-            EnterPlayPhase(); // Ë¢ĞÂ
+        {
+            if (type == CardType.Attack) attackUsedThisTurn++;
+            EnterPlayPhase();
+        }
     }
 
     private void OnPlayedCardClicked_Undo(CardInstance card)
@@ -165,132 +252,290 @@ public class BattlePanel : BasePanel
 
     private void OnHandCardClicked_Discard(CardInstance card)
     {
-        // ÆúÒ»ÕÅ
         if (CardManager.Instance.DiscardFromHand(card))
         {
-            // »¹³¬ÊÖÅÆÉÏÏŞÔò¼ÌĞøÆú
             if (CardManager.Instance.Hand.Count > maxHandSize)
             {
                 EnterDiscardPhase();
             }
             else
             {
-                ResolveEndTurn();
+                if (pendingNextTurnDiscard)
+                {
+                    pendingNextTurnDiscard = false;
+                    turnIndex++;
+                    StartPlayerTurn();   // ç›´æ¥è¿›ä¸‹ä¸€å›åˆï¼ˆä¸è¦å†ç»“ç®—ä¸€æ¬¡ï¼‰
+                }
+                else
+                {
+                    StartCoroutine(ResolveEndTurnRoutine()); // è¿™æ˜¯â€œç»“ç®—å‰å¼ƒç‰Œâ€æ‰ä¼šèµ°åˆ°è¿™
+                }
             }
         }
     }
 
+    private void OnDrawClicked()
+    {
+        if (drewThisTurn) return;
+
+        CardManager.Instance.DrawCardsToHand(drawEachTurn);
+        drewThisTurn = true;
+
+        if (drawBtn != null) drawBtn.interactable = false;
+        if (endTurnBtn != null) endTurnBtn.interactable = true;
+
+        EnterPlayPhase(); // åˆ·æ–°æç¤º/æ¸²æŸ“
+    }
+
     // -----------------------------
-    // EndTurn °´Å¥
+    // EndTurn
     // -----------------------------
     private void OnEndTurnClicked()
     {
+        // å¼ƒç‰Œé˜¶æ®µ
         if (phase == PlayerPhase.Discard)
         {
-            // ÆúÅÆ½×¶Îµã EndTurn£ºÖ»ÓĞÆú¹»²Å½áËã
             if (CardManager.Instance.Hand.Count > maxHandSize)
             {
                 EnterDiscardPhase();
                 return;
             }
-            ResolveEndTurn();
+
+            // å¦‚æœæ˜¯ç»“ç®—åå¼ƒç‰Œï¼šå¼ƒå¤Ÿäº†å°±ç›´æ¥å¼€ä¸‹ä¸€å›åˆ
+            if (pendingNextTurnDiscard)
+            {
+                pendingNextTurnDiscard = false;
+                turnIndex++;
+                StartPlayerTurn();
+                return;
+            }
+
+            StartCoroutine(ResolveEndTurnRoutine());
             return;
         }
 
-        // ³öÅÆ½×¶Îµã EndTurn£ºÈô³¬ÉÏÏŞÔò½øÈëÆúÅÆ£¬·ñÔòÖ±½Ó½áËã
+        // å‡ºç‰Œé˜¶æ®µï¼šè‹¥è¶…ä¸Šé™è¿›å…¥å¼ƒç‰Œï¼Œå¦åˆ™ç»“ç®—
         if (CardManager.Instance.Hand.Count > maxHandSize)
         {
             EnterDiscardPhase();
             return;
         }
 
-        ResolveEndTurn();
+        StartCoroutine(ResolveEndTurnRoutine());
     }
 
     // -----------------------------
-    // »ØºÏ½áËã£ºÍæ¼ÒÅÆĞ§¹û -> BossĞĞ¶¯ -> »Ø¿â -> ³éÅÆ -> Ë¢ĞÂ
+    // å›åˆç»“ç®—åç¨‹ï¼ˆä½ è¦æ”¹èŠ‚å¥å°±æ”¹è¿™é‡Œï¼‰
     // -----------------------------
-    private void ResolveEndTurn()
+    private IEnumerator ResolveEndTurnRoutine()
     {
-        // A) »ØºÏ¿ªÊ¼ÏÈ¿ÛÌåÎÂ/ÄÜÁ¿£¨ÄãÉè¶¨Ã¿»ØºÏ -10£©
-        player.ConsumeEnergy(energyCostPerTurn);
+        // é”æŒ‰é’®ï¼ˆé˜²è¿ç‚¹ï¼‰
+        if (endTurnBtn != null) endTurnBtn.interactable = false;
+        if (drawBtn != null) drawBtn.interactable = false;
 
-        // B) ½áËãÍæ¼Ò³öÁĞÅÆ
+        // å…ˆæŠŠæ‰‹ç‰Œ/å‡ºåˆ—éƒ½ç¦ç”¨ç‚¹å‡»ï¼ˆä½†ä»æ˜¾ç¤ºï¼‰
+        RenderHand(CardManager.Instance.Hand, null);
+        RenderPlayed(CardManager.Instance.playedInThisTurn, null);
+
+        if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Resolving...";
+
+        // 0) æœ¬å›åˆæ‰£ä½“æ¸©/èƒ½é‡ï¼ˆåªæ‰£ä¸€æ¬¡ï¼‰
+        player.ConsumeEnergy(energyCostPerTurn);
+        if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
+
+        if (player.currentEnergy <= 0)
+        {
+            Lose("Energy depleted");
+            yield break;
+        }
+
+        // 1) å‡ºåˆ—ç‰Œå…ˆâ€œæ¶ˆå¤±â€ï¼ˆè§†è§‰ä¸Šï¼‰
+        if (playedZone != null) playedZone.gameObject.SetActive(false);
+        if (playedVanishDelay > 0f) yield return new WaitForSeconds(playedVanishDelay);
+
+        // 2) è®°å½•â€œæœ¬å›åˆæœ€åä¸€å¼ å‡ºç‰Œâ€ï¼ˆç”¨äºä¸‹å›åˆ Recallï¼‰
         List<CardInstance> played = CardManager.Instance.playedInThisTurn;
+        CardInstance lastPlayedThisTurn = (played != null && played.Count > 0) ? played[played.Count - 1] : null;
+
+        // 3) ç»“ç®—ç©å®¶å‡ºåˆ—ç‰Œ
+        bool recallTriggered = false;
 
         for (int i = 0; i < played.Count; i++)
         {
             CardInstance c = played[i];
             CardType type = c.cardTemplate.cardType;
 
-            switch (type)
+            if (type == CardType.Attack)
             {
-                case CardType.Attack:
-                    boss.TakeDamage(c.cardTemplate.value);
-                    break;
+                boss.TakeDamage(c.cardTemplate.value);
+            }
+            else if (type == CardType.Defense)
+            {
+                shieldCharges += 1;
+            }
+            else if (type == CardType.Recovery)
+            {
+                // ä¸´æ—¶ç­–ç•¥ï¼šç¼ºå•¥è¡¥å•¥ï¼ˆä½ ä¹‹åæ¢æˆå¼¹çª—é€‰æ‹©ï¼‰
+                float hpRatio = (float)player.currentHP / player.maxHP;
+                float enRatio = (float)player.currentEnergy / player.maxEnergy;
+                if (hpRatio <= enRatio) player.Heal(12);
+                else player.RecoverEnergy(8);
+            }
+            else if (type == CardType.Recall)
+            {
+                // Recallï¼šæŠŠâ€œä¸Šä¸€å›åˆæœ€åä¸€å¼ å‡ºç‰Œâ€å›æ”¶åˆ°æ‰‹ç‰Œï¼ˆç¬¬ä¸€å›åˆå·²è¢«ç¦æ­¢å‡ºï¼‰
+                if (!recallTriggered)
+                {
+                    recallTriggered = true;
 
-                case CardType.Defense:
-                    shieldCharges += 1; // µ²Ò»´Î
-                    break;
-
-                case CardType.Recovery:
-                    // ÏÈÓÃ¹Ì¶¨Âß¼­£¨Ê¡µ¯´°£©£ºÈ±É¶²¹É¶
-                    float hpRatio = (float)player.currentHP / player.maxHP;
-                    float enRatio = (float)player.currentEnergy / player.maxEnergy;
-
-                    if (hpRatio <= enRatio) player.Heal(12);
-                    else player.RecoverEnergy(8);
-                    break;
-
-                case CardType.Recall:
-                    // ÄãÈç¹û»¹Ã»×ö»ØÊÕ£¬¾ÍÏÈÌø¹ı£¨²»Ó°Ïì±Õ»·£©
-                    // TODO£ºÃ÷Ìì²¹£º°Ñ lastPlayed ·Å»Ø Hand£¨»ò³é2ÕÅµÈ£©
-                    break;
+                    if (lastPlayedPrevTurn != null)
+                    {
+                        CardManager.Instance.TryRecallSpecificToHand(lastPlayedPrevTurn);
+                        // éœ€è¦ä½ åœ¨ CardManager åŠ ä¸€ä¸ªå‡½æ•°ï¼ˆæˆ‘ä¸‹é¢ç»™ä½ ï¼‰
+                    }
+                }
             }
         }
 
-        // C) Í¬²½ Boss ÑªÌõ + ÅĞÊ¤
+        // 4) åˆ·æ¡ï¼ˆç©å®¶ç»“ç®—å®Œ â†’ Boss æ‰è¡€/å›è¡€æ¸…æ¥šå¯è§ï¼‰
         if (bossHpBar != null) bossHpBar.UpdateValue(boss.currentHp);
-        if (boss.IsDead())
+        if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
+        if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
+
+        if (afterPlayerResolveDelay > 0f)
         {
-            if (phaseHintText != null) phaseHintText.text = "WIN!";
-            Debug.Log("WIN!");
-            return;
+            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Player effects resolved";
+            yield return new WaitForSeconds(afterPlayerResolveDelay);
         }
 
-        // D) Boss ĞĞ¶¯£¨ÏÈÖ»×ö¹¥»÷£¬ÍµÅÆÃ÷Ìì¼Ó£©
+        // 5) åˆ¤èƒœ
+        if (boss.IsDead())
+        {
+            Win();
+            yield break;
+        }
+
+        // 6) Boss å›åˆï¼ˆå»¶è¿Ÿ + è¡ŒåŠ¨ï¼‰
+        if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Boss Turn...";
+        if (bossActDelay > 0f) yield return new WaitForSeconds(bossActDelay);
+
+        int skill = boss.GetRandomSkill();
+        if (skill == 0)
+        {
+            yield return StartCoroutine(BossAttackRoutine());
+        }
+        else
+        {
+            yield return StartCoroutine(BossStealRoutine());
+        }
+
+        if (afterBossResolveDelay > 0f)
+        {
+            if (phaseHintText != null) phaseHintText.text = $"Turn {turnIndex} - Boss action resolved";
+            yield return new WaitForSeconds(afterBossResolveDelay);
+        }
+
+        // 7) åˆ¤è´Ÿ
+        if (!player.isAlive || player.currentEnergy <= 0)
+        {
+            Lose("HP/Energy depleted");
+            yield break;
+        }
+
+        // 8) æ›´æ–°â€œä¸Šä¸€å›åˆæœ€åä¸€å¼ å‡ºç‰Œâ€
+        lastPlayedPrevTurn = lastPlayedThisTurn;
+
+        // 9) å‡ºåˆ—ç‰Œå›åº“ & æ¸…ç©ºå‡ºåˆ—
+        CardManager.Instance.ReturnPlayedToBaseDeck();
+
+        for (int i = playedZone.childCount - 1; i >= 0; i--)
+            Destroy(playedZone.GetChild(i).gameObject);
+
+        // ç»“ç®—å®Œå¦‚æœè¶…æ‰‹ç‰Œä¸Šé™ï¼šå…ˆå¼ƒç‰Œï¼Œå¼ƒå¤Ÿäº†æ‰è¿›ä¸‹ä¸€å›åˆ
+        if (CardManager.Instance.Hand.Count > maxHandSize)
+        {
+            pendingNextTurnDiscard = true;
+
+            EnterDiscardPhase();
+
+            // æŒ‰é’®çŠ¶æ€ï¼šå¼ƒç‰Œé˜¶æ®µä¸€èˆ¬ä¸ç»™ Draw
+            if (drawBtn != null) drawBtn.interactable = false;
+            if (endTurnBtn != null) endTurnBtn.interactable = true;
+
+            yield break; //ä¸è¿›å…¥ä¸‹ä¸€å›åˆ
+        }
+
+
+        
+
+        // 10) ä¸‹ä¸€å›åˆ
+        turnIndex++;
+        StartPlayerTurn();
+    }
+
+    // -----------------------------
+    // Bossï¼šæ”»å‡»ï¼ˆæŠ“ç—• + æ‰£è¡€ï¼‰
+    // -----------------------------
+    private IEnumerator BossAttackRoutine()
+    {
+        if (phaseHintText != null) phaseHintText.text = "Boss attacks!";
+
+        if (scratchFx != null) scratchFx.SetActive(true);
+        if (scratchShowTime > 0f) yield return new WaitForSeconds(scratchShowTime);
+        if (scratchFx != null) scratchFx.SetActive(false);
+
         int damage = boss.GetAttackDamage();
         if (shieldCharges > 0)
         {
             shieldCharges--;
             damage = 0;
         }
+
         player.TakeDamage(damage);
+        if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
 
-        // E) ÅĞ¸º£¨HP »ò ÌåÎÂÎª0¶¼ËãÊä£©
-        bool energyDead = player.currentEnergy <= 0;
-        if (!player.isAlive || energyDead)
+        yield return null;
+    }
+
+    // -----------------------------
+    // Bossï¼šå·ç‰Œï¼ˆç®€åŒ–ç‰ˆï¼šéšæœºå· 1 å¼ å›åº“ï¼‰
+    // -----------------------------
+    private IEnumerator BossStealRoutine()
+    {
+        if (phaseHintText != null) phaseHintText.text = "Boss steals a card!";
+
+        if (CardManager.Instance.Hand.Count > 0)
         {
-            if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
-            if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
+            int idx = Random.Range(0, CardManager.Instance.Hand.Count);
+            CardInstance stolen = CardManager.Instance.Hand[idx];
 
-            if (phaseHintText != null) phaseHintText.text = "LOSE!";
-            Debug.Log("LOSE!");
-            return;
+            CardManager.Instance.Hand.RemoveAt(idx);
+            CardManager.Instance.ReturnCardToBaseDeck(stolen);
+
+            // åˆ·ä¸€ä¸‹æ‰‹ç‰Œï¼Œè®©ç©å®¶çœ‹åˆ°å°‘äº†ä¸€å¼ ï¼ˆBoss å›åˆç¦ç”¨ç‚¹å‡»ï¼‰
+            RenderHand(CardManager.Instance.Hand, null);
         }
 
-        // F) ³öÁĞÅÆ»Ø¿â
-        CardManager.Instance.ReturnPlayedToBaseDeck();
+        if (stealShowTime > 0f) yield return new WaitForSeconds(stealShowTime);
+    }
 
-        // G) ³é 2
-        CardManager.Instance.DrawCardsToHand(drawEachTurn);
-
-        // H) Ë¢ĞÂÑªÌõ
-        if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
-        if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
+    // -----------------------------
+    // Win / Lose
+    // -----------------------------
+    private void Win()
+    {
         if (bossHpBar != null) bossHpBar.UpdateValue(boss.currentHp);
+        if (phaseHintText != null) phaseHintText.text = "WIN!";
+        if (endTurnBtn != null) endTurnBtn.interactable = false;
+        if (drawBtn != null) drawBtn.interactable = false;
+        Debug.Log("WIN!");
+    }
 
-        // I) »Øµ½³öÅÆ½×¶Î
-        EnterPlayPhase();
+    private void Lose(string reason)
+    {
+        if (phaseHintText != null) phaseHintText.text = "LOSE!";
+        if (endTurnBtn != null) endTurnBtn.interactable = false;
+        if (drawBtn != null) drawBtn.interactable = false;
+        Debug.Log("LOSE: " + reason);
     }
 }

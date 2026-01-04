@@ -136,6 +136,8 @@ public class CardManager
         return true;
     }
 
+
+
     /// <summary>
     /// 回牌库方法 用掉了以后回牌库 
     /// </summary>
@@ -161,6 +163,27 @@ public class CardManager
 
         // 你现在砍掉 rewardDeck 的话，统一回 base
         _baseDeck.Add(card);
+        return true;
+    }
+
+    public void ReturnCardToBaseDeck(CardInstance card)
+    {
+        if (card == null) return;
+        if (_baseDeck == null) return;
+        _baseDeck.Add(card);
+    }
+
+    // Recall：把指定那张（上一回合最后一张）从 BaseDeck 拿出来放回手牌
+    public bool TryRecallSpecificToHand(CardInstance target)
+    {
+        if (target == null) return false;
+        if (_baseDeck == null) return false;
+
+        int idx = _baseDeck.IndexOf(target);
+        if (idx < 0) return false;  // 牌库里找不到就算了
+
+        _baseDeck.RemoveAt(idx);
+        Hand.Add(target);
         return true;
     }
 
