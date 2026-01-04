@@ -20,6 +20,10 @@ public class TalentPanel : BasePanel
         scarfBtn.onClick.AddListener(() =>
         {
             print("每回合体温值流失降低至5点");
+            //测试按钮
+            if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift))
+                ProgressManager.Instance.Data.currentLevel = LevelType.Level3;
+
             ProgressManager.Instance.Data.selectedTalent = TalentType.Scarf;
             UIManager.Instance.ShowPanel("BattlePanel");
             UIManager.Instance.HiddenPanel("TalentPanel");

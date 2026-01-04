@@ -604,20 +604,55 @@ public class BattlePanel : BasePanel
         StartPlayerTurn();
     }
 
+
+    private void PlayFinalVictory()
+    {
+        BasePanel p = UIManager.Instance.ShowPanel("FinalPanel");
+        FinalPanel fp = p as FinalPanel;
+        if (fp != null) fp.PlayVictory();
+        else Debug.LogError("ShowPanel('FinalPanel') 返回的不是 FinalPanel，请检查预制体上挂的脚本类型。");
+    }
+
+    private void PlayFinalFail()
+    {
+        BasePanel p = UIManager.Instance.ShowPanel("FinalPanel");
+        FinalPanel fp = p as FinalPanel;
+        if (fp != null) fp.PlayFail();
+        else Debug.LogError("ShowPanel('FinalPanel') 返回的不是 FinalPanel，请检查预制体上挂的脚本类型。");
+    }
+
     private void Win()
     {
-        if (bossHpBar != null) bossHpBar.UpdateValue(boss.currentHp);
-        if (phaseHintText != null) phaseHintText.text = "WIN!";
         if (endTurnBtn != null) endTurnBtn.interactable = false;
         if (drawBtn != null) drawBtn.interactable = false;
-        Debug.Log("WIN!");
+
+        //  第三关胜利：播胜利动画面板
+        if (ProgressManager.Instance.Data.currentLevel == LevelType.Level3)
+        {
+            PlayFinalVictory();
+            return;
+        }
+
+        // 否则：走你“切下一关”的逻辑（HandleBossDefeatedRoutine 里应该会处理）
+        if (phaseHintText != null) phaseHintText.text = "WIN!";
     }
 
     private void Lose(string reason)
     {
         Debug.Log("LOSE: " + reason);
 
-        // Level2：回到 Level2 开局 checkpoint
+        // 先锁按钮，防止还在操作
+        if (endTurnBtn != null) endTurnBtn.interactable = false;
+        if (drawBtn != null) drawBtn.interactable = false;
+
+        //  Level3：失败直接播结尾失败动画（不回档）
+        if (Level == LevelType.Level3)
+        {
+            PlayFinalFail();
+            return;
+        }
+
+        //  Level2：回到 Level2 开局 checkpoint
         if (Level == LevelType.Level2)
         {
             bool ok = ProgressManager.Instance.TryLoadCheckpoint(LevelType.Level2, player, CardManager.Instance);
@@ -640,11 +675,10 @@ public class BattlePanel : BasePanel
             }
         }
 
-        // 其他关：结束
+        //  其他关：先直接结束（你要不要加“回到开始界面”都行，之后再说）
         if (phaseHintText != null) phaseHintText.text = "LOSE!";
-        if (endTurnBtn != null) endTurnBtn.interactable = false;
-        if (drawBtn != null) drawBtn.interactable = false;
     }
+
 
     private LevelType NextLevel(LevelType lv)
     {
