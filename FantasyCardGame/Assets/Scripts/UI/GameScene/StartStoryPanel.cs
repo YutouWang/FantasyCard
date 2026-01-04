@@ -2,10 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Video;
 
 public class StartStoryPanel : BasePanel
 {
     public Button continueBtn;
+    public VideoPlayer storyVideo;
     public override void Init()
     {
         //按下继续按钮 会进入选天赋面板 
@@ -19,13 +21,27 @@ public class StartStoryPanel : BasePanel
         });
     }
 
+    // 面板显示时播放
+    private bool videoStarted = false;
 
-    // Update is called once per frame
     public override void Update()
     {
         base.Update();
-        print("开场分镜动画的逻辑");
-        //此处应该写三个分镜一次按时间显示出来的逻辑
-        
+
+        // 面板显示且视频没播放过
+        if (isShow && !videoStarted)
+        {
+            if (storyVideo != null) storyVideo.Play();
+            videoStarted = true;
+        }
+
+        // 面板隐藏时停止视频
+        if (!isShow && videoStarted)
+        {
+            if (storyVideo != null) storyVideo.Stop();
+            videoStarted = false;
+        }
     }
+
+  
 }
