@@ -44,7 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c82e3c9855a8bd458c531595ec2a682, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackSprite: {fileID: 686204479, guid: 37350c5501a36c24e8bc78f0c9610c08, type: 3}
+  attackSprite: {fileID: 21300000, guid: 77884ec1803ee734e94c2ad66eee35de, type: 3}
   defenseSprite: {fileID: 21300000, guid: 7a6906c03a7bf0447ad17f40257aa15f, type: 3}
   recallSprite: {fileID: 21300000, guid: 6478e93258fa16d48968c98bc7e2889a, type: 3}
   recoverySprite: {fileID: 21300000, guid: ecb2e8689571e9c499b800c8deedfdcb, type: 3}

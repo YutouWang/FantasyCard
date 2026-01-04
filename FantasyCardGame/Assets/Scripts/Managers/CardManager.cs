@@ -137,7 +137,7 @@ public class CardManager
     }
 
     /// <summary>
-    /// 回牌库方法 例如使用掉了以后回牌库 弃掉的牌回牌库
+    /// 回牌库方法 用掉了以后回牌库 
     /// </summary>
     public void ReturnPlayedToBaseDeck()
     {
@@ -147,6 +147,21 @@ public class CardManager
             _baseDeck.Add(playedInThisTurn[i]);
         }
         playedInThisTurn.Clear();
+    }
+
+    /// <summary>
+    /// 弃掉的牌回牌库
+    /// </summary>
+    /// <param name="card"></param>
+    /// <returns></returns>
+    public bool DiscardFromHand(CardInstance card)
+    {
+        if (card == null) return false;
+        if (!Hand.Remove(card)) return false;
+
+        // 你现在砍掉 rewardDeck 的话，统一回 base
+        _baseDeck.Add(card);
+        return true;
     }
 
 

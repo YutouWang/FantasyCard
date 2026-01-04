@@ -2,15 +2,23 @@ using UnityEngine;
 
 public class BossData
 {
-    public LevelType levelType = LevelType.Level1; // 关卡 1 / 2 / 3
-    public int maxHp = 100;
-    public int currentHp = 100;
+    public LevelType levelType;   // Level1 / Level2 / Level3
+    public int maxHp;
+    public int currentHp;
+
+    public BossData(LevelType levelType)
+    {
+        this.levelType = levelType;
+
+        maxHp = GetMaxHpByLevel(levelType);
+        currentHp = maxHp;
+    }
 
     public void TakeDamage(int damage)
     {
+        if (damage <= 0) return;
         currentHp -= damage;
-        if (currentHp < 0)
-            currentHp = 0;
+        if (currentHp < 0) currentHp = 0;
     }
 
     public bool IsDead()
@@ -18,14 +26,7 @@ public class BossData
         return currentHp <= 0;
     }
 
-    public BossData(int stage)
-    {
-        //this.stage = stage;
-    }
-
-    // 返回 Boss 本回合技能
-    // 0 = 攻击玩家
-    // 1 = 夺取卡牌
+    // 0 = 攻击玩家，1 = 夺牌
     public int GetRandomSkill()
     {
         return Random.Range(0, 2);
@@ -33,9 +34,23 @@ public class BossData
 
     public int GetAttackDamage()
     {
-        //if (stage == 1) return 10;
-        //if (stage == 2) return 20;
-        //if (stage == 3) return 30;
-        return 10;
+        switch (levelType)
+        {
+            case LevelType.Level1: return 10;
+            case LevelType.Level2: return 20;
+            case LevelType.Level3: return 30;
+            default: return 10;
+        }
+    }
+
+    private int GetMaxHpByLevel(LevelType lvl)
+    {
+        switch (lvl)
+        {
+            case LevelType.Level1: return 80;
+            case LevelType.Level2: return 120;
+            case LevelType.Level3: return 160;
+            default: return 100;
+        }
     }
 }

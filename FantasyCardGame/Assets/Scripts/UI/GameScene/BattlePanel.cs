@@ -1,160 +1,296 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
 
 public class BattlePanel : BasePanel
 {
-    [Header("拖拽引用")]
-    public Transform handRoot;          //  手牌容器 用于实例化的时候 提供生成所需的位置信息
-    public Transform playedZone;        //  手牌打出去的区域
-    public GameObject cardPrefab;       //  从外部拖进来 CardPrefab
+    [Header("区域引用")]
+    public Transform handRoot;          // 手牌容器
+    public Transform playedZone;        // 出列区（本回合已打出的牌）
+    public GameObject cardPrefab;       // CardPrefab（上面挂 CardUI）
+
+    [Header("按钮 / 文本")]
+    public Button endTurnBtn;           // 结束回合按钮
+    public TMP_Text phaseHintText;      // 提示文本：Player Turn / Discard X
 
     [Header("Resources 路径")]
     public string cardDataInitPath = "Card/CardDataInit";
 
+    [Header("血条")]
     public StatBar playerHpBar;
     public StatBar playerEnergyBar;
     public StatBar bossHpBar;
 
-
+    // 数据
     public PlayerData player = new PlayerData();
     private BossData boss;
 
+    // 阶段
+    private enum PlayerPhase { Play, Discard }
+    private PlayerPhase phase = PlayerPhase.Play;
+
+    [Header("规则")]
+    public int maxHandSize = 5;         // 手牌上限（1/2关 = 5）
+    public int startHandCount = 5;      // 初始手牌
+    public int drawEachTurn = 2;        // 每回合抽牌数
+    public int energyCostPerTurn = 10;  // 每回合扣体温/能量
+    private int shieldCharges = 0;      // 防御牌挡几次
 
     public override void Init()
     {
-        //因为上面这些动态加载的部分需要用到mono 所以写在battlepanel里面了
+        // 1) 初始化牌库
+        CardDataInit initScript = LoadCardDataInit();
+        if (initScript == null) return;
 
-        #region 1.从 Resources 加载 CardDataInit
+        List<CardInstance> deck = initScript.CreateBaseDeck();
+        CardManager.Instance.Init(deck);           // 把 deck 交给 CardManager 管
+        CardManager.Instance.DrawCardsToHand(startHandCount);
+
+        // 2) 初始化角色与血条
+        player.Init();
+        boss = new BossData(LevelType.Level1);
+        boss.maxHp = 100;
+        boss.currentHp = boss.maxHp;
+
+        if (playerHpBar != null) playerHpBar.Initialize(player.maxHP, player.currentHP);
+        if (playerEnergyBar != null) playerEnergyBar.Initialize(player.maxEnergy, player.currentEnergy);
+        if (bossHpBar != null) bossHpBar.Initialize(boss.maxHp, boss.currentHp);
+
+        // 3) 绑定 EndTurn 按钮
+        if (endTurnBtn != null)
+        {
+            endTurnBtn.onClick.RemoveAllListeners();
+            endTurnBtn.onClick.AddListener(OnEndTurnClicked);
+        }
+        else
+        {
+            Debug.LogWarning("endTurnBtn 没有绑定：请在 BattlePanel 预制体上拖入按钮");
+        }
+
+        // 4) 进入出牌阶段（刷新UI）
+        EnterPlayPhase();
+    }
+
+    // -----------------------------
+    // 初始化：加载 CardDataInit
+    // -----------------------------
+    private CardDataInit LoadCardDataInit()
+    {
         GameObject initPrefab = Resources.Load<GameObject>(cardDataInitPath);
         if (initPrefab == null)
         {
-            Debug.LogError(" 没有在 Resources/" + cardDataInitPath + "找到 CardDataInit prefab");
-            return;
+            Debug.LogError("没有在 Resources/" + cardDataInitPath + " 找到 CardDataInit prefab");
+            return null;
         }
 
-        //实例化的预制体
         GameObject initObj = Instantiate(initPrefab);
-        if (initObj == null)
-        {
-            print("initObj(carddatainit实例化不出来)");
-        }
-        //得到实例上挂载的脚本
         CardDataInit initScript = initObj.GetComponent<CardDataInit>();
-
         if (initScript == null)
         {
-            Debug.LogError("没有在CardDataInit预制体上找到CardDataInit脚本");
-            return;
+            Debug.LogError("CardDataInit 预制体上没有 CardDataInit 脚本");
+            return null;
         }
-        #endregion
-
-        // 2.创建基础牌库
-        List<CardInstance> deck = initScript.CreateBaseDeck();
-
-        #region 3. 将上面生成的Deck传进Cardmanager便于管理，随机抽5张牌入Hand列表 渲染Hand中的card（绑定UI数据）
-
-
-        #region 原始测试初始化5张牌逻辑
-        //for (int i = 0; i < 5; i++)
-        //{
-        //    GameObject aCard = Instantiate(cardPrefab, handRoot, false);
-        //    Debug.Log(aCard == null ? "aCard == NULL" : $"aCard OK: {aCard.name}");
-
-        //    //得到CardUI预制体上的脚本
-        //    CardUI cardUIScript = aCard.GetComponent<CardUI>();
-
-        //    if (cardUIScript == null)
-        //    {
-        //        Debug.LogError("CardPrefab 上没有 CardUI脚本 ");
-        //        return;
-        //    }
-        //    if (i == 0)
-        //        cardUIScript.BindInstance(deck[0]);
-        //    if (i == 1)
-        //        cardUIScript.BindInstance(deck[6]);
-        //    if (i == 2)
-        //        cardUIScript.BindInstance(deck[13]);
-        //    if (i == 3)
-        //        cardUIScript.BindInstance(deck[17]);
-        //    if (i == 4)
-        //        cardUIScript.BindInstance(deck[8]);
-        //}
-        #endregion
-
-        //把牌库创建好 存到manager里便于后续管理牌库中的数据 （抽牌、弃牌回到牌库等操作）
-        CardManager.Instance.Init(deck);
-
-        //随机抽5张牌
-        CardManager.Instance.DrawCardsToHand(5);
-
-        RenderHand(CardManager.Instance.Hand);
-        #endregion
+        return initScript;
     }
 
-    //渲染手牌区域的手牌的函数
-    private void RenderHand(List<CardInstance> hand)
+    // -----------------------------
+    // 阶段切换
+    // -----------------------------
+    private void EnterPlayPhase()
     {
-        // 先清空（比较保险 害怕层级中有别的gameObject）
+        phase = PlayerPhase.Play;
+        if (phaseHintText != null) phaseHintText.text = "Player Turn";
+
+        RenderHand(CardManager.Instance.Hand, OnHandCardClicked_Play);
+        RenderPlayed(CardManager.Instance.playedInThisTurn, OnPlayedCardClicked_Undo);
+    }
+
+    private void EnterDiscardPhase()
+    {
+        phase = PlayerPhase.Discard;
+        int needDiscard = Mathf.Max(0, CardManager.Instance.Hand.Count - maxHandSize);
+        if (phaseHintText != null) phaseHintText.text = $"Discard {needDiscard}";
+
+        // 弃牌阶段：手牌点一下 = 弃牌；出列区不允许撤回
+        RenderHand(CardManager.Instance.Hand, OnHandCardClicked_Discard);
+        RenderPlayed(CardManager.Instance.playedInThisTurn, null);
+    }
+
+    // -----------------------------
+    // 渲染
+    // -----------------------------
+    private void RenderHand(List<CardInstance> hand, UnityAction<CardInstance> onClick)
+    {
         for (int i = handRoot.childCount - 1; i >= 0; i--)
             Destroy(handRoot.GetChild(i).gameObject);
 
-        // 再生成
         foreach (CardInstance instance in hand)
         {
-            GameObject card = Instantiate(cardPrefab, handRoot, false);
-            card.GetComponent<CardUI>().BindInstance(instance,OnCardOnClicked);
+            GameObject go = Instantiate(cardPrefab, handRoot, false);
+            CardUI ui = go.GetComponent<CardUI>();
+            ui.BindInstance(instance, onClick);
         }
     }
 
-    //渲染Played（Table）区域的手牌
-    private void RenderPlayed(List<CardInstance> played)
+    private void RenderPlayed(List<CardInstance> played, UnityAction<CardInstance> onClick)
     {
-        //先清空
         for (int i = playedZone.childCount - 1; i >= 0; i--)
             Destroy(playedZone.GetChild(i).gameObject);
 
         foreach (CardInstance instance in played)
         {
-            GameObject card = Instantiate(cardPrefab, playedZone, false);
-
-            // 出列区牌的点击出牌逻辑 回调函数OnPlayedCardClicked 撤销这张出牌
-            card.GetComponent<CardUI>().BindInstance(instance, OnPlayedCardClicked);
+            GameObject go = Instantiate(cardPrefab, playedZone, false);
+            CardUI ui = go.GetComponent<CardUI>();
+            ui.BindInstance(instance, onClick);
         }
-
     }
 
-    //Hand区域button传入的回调函数
-    private void OnCardOnClicked(CardInstance card)
+    // -----------------------------
+    // 点击回调：出牌 / 撤回 / 弃牌
+    // -----------------------------
+    private void OnHandCardClicked_Play(CardInstance card)
     {
-        print(card.cardTemplate.cardName + "被点击了一下，执行出牌逻辑");
-
-        //出牌加判断
         if (CardManager.Instance.TryPlayToTable(card))
-        {
-            //两个牌列表都刷新渲染逻辑
-
-            //出牌逻辑成功了再渲染在 played 区域
-            RenderPlayed(CardManager.Instance.playedInThisTurn);
-
-            //Hand 也要重新渲染 因为Hand移除卡牌了 重新渲染一次
-            RenderHand(CardManager.Instance.Hand);
-        }
-            
-
+            EnterPlayPhase(); // 刷新
     }
-    //Played区域button传入的回调函数
-    private void OnPlayedCardClicked(CardInstance card)
+
+    private void OnPlayedCardClicked_Undo(CardInstance card)
     {
-        print(card.cardTemplate.cardName + "被点击了一下，撤销这张出牌");
         if (CardManager.Instance.TryUnplayToHand(card))
-        {
-            //在渲染一次两列表
-            RenderHand(CardManager.Instance.Hand);
-            RenderPlayed(CardManager.Instance.playedInThisTurn);
-        }
-        
+            EnterPlayPhase();
     }
 
+    private void OnHandCardClicked_Discard(CardInstance card)
+    {
+        // 弃一张
+        if (CardManager.Instance.DiscardFromHand(card))
+        {
+            // 还超手牌上限则继续弃
+            if (CardManager.Instance.Hand.Count > maxHandSize)
+            {
+                EnterDiscardPhase();
+            }
+            else
+            {
+                ResolveEndTurn();
+            }
+        }
+    }
+
+    // -----------------------------
+    // EndTurn 按钮
+    // -----------------------------
+    private void OnEndTurnClicked()
+    {
+        if (phase == PlayerPhase.Discard)
+        {
+            // 弃牌阶段点 EndTurn：只有弃够才结算
+            if (CardManager.Instance.Hand.Count > maxHandSize)
+            {
+                EnterDiscardPhase();
+                return;
+            }
+            ResolveEndTurn();
+            return;
+        }
+
+        // 出牌阶段点 EndTurn：若超上限则进入弃牌，否则直接结算
+        if (CardManager.Instance.Hand.Count > maxHandSize)
+        {
+            EnterDiscardPhase();
+            return;
+        }
+
+        ResolveEndTurn();
+    }
+
+    // -----------------------------
+    // 回合结算：玩家牌效果 -> Boss行动 -> 回库 -> 抽牌 -> 刷新
+    // -----------------------------
+    private void ResolveEndTurn()
+    {
+        // A) 回合开始先扣体温/能量（你设定每回合 -10）
+        player.ConsumeEnergy(energyCostPerTurn);
+
+        // B) 结算玩家出列牌
+        List<CardInstance> played = CardManager.Instance.playedInThisTurn;
+
+        for (int i = 0; i < played.Count; i++)
+        {
+            CardInstance c = played[i];
+            CardType type = c.cardTemplate.cardType;
+
+            switch (type)
+            {
+                case CardType.Attack:
+                    boss.TakeDamage(c.cardTemplate.value);
+                    break;
+
+                case CardType.Defense:
+                    shieldCharges += 1; // 挡一次
+                    break;
+
+                case CardType.Recovery:
+                    // 先用固定逻辑（省弹窗）：缺啥补啥
+                    float hpRatio = (float)player.currentHP / player.maxHP;
+                    float enRatio = (float)player.currentEnergy / player.maxEnergy;
+
+                    if (hpRatio <= enRatio) player.Heal(12);
+                    else player.RecoverEnergy(8);
+                    break;
+
+                case CardType.Recall:
+                    // 你如果还没做回收，就先跳过（不影响闭环）
+                    // TODO：明天补：把 lastPlayed 放回 Hand（或抽2张等）
+                    break;
+            }
+        }
+
+        // C) 同步 Boss 血条 + 判胜
+        if (bossHpBar != null) bossHpBar.UpdateValue(boss.currentHp);
+        if (boss.IsDead())
+        {
+            if (phaseHintText != null) phaseHintText.text = "WIN!";
+            Debug.Log("WIN!");
+            return;
+        }
+
+        // D) Boss 行动（先只做攻击，偷牌明天加）
+        int damage = boss.GetAttackDamage();
+        if (shieldCharges > 0)
+        {
+            shieldCharges--;
+            damage = 0;
+        }
+        player.TakeDamage(damage);
+
+        // E) 判负（HP 或 体温为0都算输）
+        bool energyDead = player.currentEnergy <= 0;
+        if (!player.isAlive || energyDead)
+        {
+            if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
+            if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
+
+            if (phaseHintText != null) phaseHintText.text = "LOSE!";
+            Debug.Log("LOSE!");
+            return;
+        }
+
+        // F) 出列牌回库
+        CardManager.Instance.ReturnPlayedToBaseDeck();
+
+        // G) 抽 2
+        CardManager.Instance.DrawCardsToHand(drawEachTurn);
+
+        // H) 刷新血条
+        if (playerHpBar != null) playerHpBar.UpdateValue(player.currentHP);
+        if (playerEnergyBar != null) playerEnergyBar.UpdateValue(player.currentEnergy);
+        if (bossHpBar != null) bossHpBar.UpdateValue(boss.currentHp);
+
+        // I) 回到出牌阶段
+        EnterPlayPhase();
+    }
 }
