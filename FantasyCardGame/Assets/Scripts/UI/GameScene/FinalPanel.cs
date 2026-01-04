@@ -223,13 +223,12 @@ public class FinalPanel : BasePanel
     {
         isPlaying = false;
 
-        // ✅ 用 UIManager.HiddenPanel 来销毁自己并从字典移除（否则下次 ShowPanel 会复用旧对象）
+        //  用 UIManager.HiddenPanel 来销毁自己并从字典移除（否则下次 ShowPanel 会复用旧对象）
         UIManager.Instance.HiddenPanel("FinalPanel");
 
         // 切回开始场景
         SceneManager.LoadScene("BeginScene");
 
-        // 切回去一定要把开始 UI show 出来，否则就是白屏
-        //UIManager.Instance.ShowPanel("BeginPanel");
+        
     }
 }
