@@ -102,7 +102,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b5072d39092bb0842a38e7e7de3dbba2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: fc2220f2357abd144a5df5a8c13f8fd5, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -184,7 +184,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: -1094, y: -260.8}
-  m_SizeDelta: {x: 1500, y: 320}
+  m_SizeDelta: {x: 1500, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3183546193964129384
 CanvasRenderer:
@@ -994,7 +994,7 @@ GameObject:
   - component: {fileID: 425222624089933382}
   - component: {fileID: 2923810007197580479}
   m_Layer: 5
-  m_Name: LV_3
+  m_Name: BattlePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1079,14 +1079,6 @@ MonoBehaviour:
   playedZone: {fileID: 4400522593181697313}
   cardPrefab: {fileID: 3359990620152501388, guid: 141ffa29c831a6e428995bdcc550713a, type: 3}
   cardDataInitPath: Card/CardDataInit
-  playerHpBar: {fileID: 0}
-  playerEnergyBar: {fileID: 0}
-  bossHpBar: {fileID: 0}
-  player:
-    maxHP: 100
-    currentHP: 100
-    maxEnergy: 100
-    currentEnergy: 100
 --- !u!1 &6733385172046986036
 GameObject:
   m_ObjectHideFlags: 0
@@ -1258,8 +1250,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 1096.6, y: -28.55}
-  m_SizeDelta: {x: 1500, y: 330}
+  m_AnchoredPosition: {x: 1140.1, y: -28.55}
+  m_SizeDelta: {x: 1500, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3619814216492244027
 CanvasRenderer:
@@ -1289,7 +1281,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f1400b56665a00f44bfa5b0c1f3393ee, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 760b479854c16da4ebfbb33ce8ccbf58, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1333,8 +1325,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -942.5, y: -469.5}
-  m_SizeDelta: {x: 1661.9, y: 950}
+  m_AnchoredPosition: {x: -913.9, y: -535}
+  m_SizeDelta: {x: 1373.6333, y: 750}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5697608038955081772
 CanvasRenderer:
@@ -1364,7 +1356,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 97803a38787ee744e96f40c783c4b9c2, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8b77fe8776dd77f4e8c152e711df7ccf, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
