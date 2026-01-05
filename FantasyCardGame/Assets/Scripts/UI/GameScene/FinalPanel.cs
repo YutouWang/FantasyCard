@@ -20,8 +20,7 @@ public class FinalPanel : BasePanel
     public Sprite failSlide;
     public float failDisplayTime = 2f;
 
-    [Header("回到开始界面时要显示的面板名（Resources/UI/xxx）")]
-    public string startPanelName = "StartPanel";
+    
 
     private CanvasGroup victoryCanvasGroup;
     private CanvasGroup failCanvasGroup;
