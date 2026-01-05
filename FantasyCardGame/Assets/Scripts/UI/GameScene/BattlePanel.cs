@@ -629,7 +629,9 @@ public class BattlePanel : BasePanel
         //  第三关胜利：播胜利动画面板
         if (ProgressManager.Instance.Data.currentLevel == LevelType.Level3)
         {
-            PlayFinalVictory();
+            FinalPanel fp = UIManager.Instance.ShowPanel("FinalPanel") as FinalPanel;
+            fp.PlayVictory(); 
+            UIManager.Instance.HiddenPanel("BattlePanel");
             return;
         }
 
@@ -648,7 +650,9 @@ public class BattlePanel : BasePanel
         //  Level3：失败直接播结尾失败动画（不回档）
         if (Level == LevelType.Level3)
         {
-            PlayFinalFail();
+            FinalPanel fp = UIManager.Instance.ShowPanel("FinalPanel") as FinalPanel;
+            fp.PlayFail(); 
+            UIManager.Instance.HiddenPanel("BattlePanel");
             return;
         }
 
